@@ -17,10 +17,29 @@ class EnvironmentVariablesFactoryTest {
 
     @Test
     void loadsTokenWithoutExposingItInTheModelDescription() {
-        EnvironmentVariables environment = EnvironmentVariablesFactory.from(Map.of("GITHUB_TOKEN", "example-token"));
+        EnvironmentVariables environment = EnvironmentVariablesFactory.from(Map.of(
+                "GITHUB_TOKEN", "example-token",
+                "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
+                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage",
+                "MATERIALIZATION_SERVICE_REPOSITORY", "owner/service"
+        ));
 
         assertEquals("example-token", environment.githubToken());
+        assertEquals("owner/registry", environment.materializerRegistryRepository());
+        assertEquals("owner/storage", environment.pipelineStructureStoreRepository());
         assertFalse(environment.toString().contains("example-token"));
+    }
+
+    @Test
+    void rejectsInvalidServiceRepository() {
+        Map<String, String> environment = Map.of(
+                "GITHUB_TOKEN", "example-token",
+                "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
+                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage",
+                "MATERIALIZATION_SERVICE_REPOSITORY", "invalid"
+        );
+
+        assertThrows(EnvironmentVariableException.class, () -> EnvironmentVariablesFactory.from(environment));
     }
 
     @Test

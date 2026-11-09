@@ -14,7 +14,10 @@ public final class EnvironmentVariablesFactory {
 
     public static EnvironmentVariables from(Map<String, String> environment) {
         EnvironmentVariables environmentVariables = new EnvironmentVariables(
-                extractString(environment, "GITHUB_TOKEN")
+                extractString(environment, "GITHUB_TOKEN"),
+                extractString(environment, "MATERIALIZER_REGISTRY_REPOSITORY"),
+                extractString(environment, "PIPELINE_STRUCTURE_STORE_REPOSITORY"),
+                extractString(environment, "MATERIALIZATION_SERVICE_REPOSITORY")
         );
 
         try {

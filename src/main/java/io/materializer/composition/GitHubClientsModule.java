@@ -1,6 +1,7 @@
 package io.materializer.composition;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -10,6 +11,12 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 
 public class GitHubClientsModule extends AbstractModule {
+
+    @Provides
+    @Singleton
+    HttpClient provideHttpClient() {
+        return HttpClient.newHttpClient();
+    }
 
     @Provides
     @Singleton
