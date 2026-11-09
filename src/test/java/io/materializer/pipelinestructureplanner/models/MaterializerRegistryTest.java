@@ -1,4 +1,4 @@
-package io.materializer.ignition.models;
+package io.materializer.pipelinestructureplanner.models;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,10 +1,11 @@
-package io.materializer.ignition.models;
+package io.materializer.pipelinestructureplanner.models;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.materializer.pipelinestructureplanner.models.annotations.UniqueMaterializerRegistrationsByRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -12,9 +13,8 @@ public record MaterializerRegistry(
 
         @JsonProperty("registrations")
         @NotNull
-        List<
-                @NotNull @Valid MaterializerRegistration
-        > registrations
+        @UniqueMaterializerRegistrationsByRepository
+        List<@NotNull @Valid MaterializerRegistration> registrations
 
 ) {
     public MaterializerRegistry {

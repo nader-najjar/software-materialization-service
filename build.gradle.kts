@@ -24,7 +24,7 @@ eclipse {
 }
 
 base {
-    archivesName.set("universal-materialization-service")
+    archivesName.set("software-materialization-service")
 }
 
 java {
@@ -83,6 +83,7 @@ dependencies {
     // GitHub Interaction
     implementation("org.kohsuke:github-api:1.330")
     compileOnly("com.infradna.tool:bridge-method-annotation:1.30")
+    testCompileOnly("com.infradna.tool:bridge-method-annotation:1.30")
 
     // Validators
     implementation(platform("org.hibernate.validator:hibernate-validator-bom:9.1.0.Final"))
