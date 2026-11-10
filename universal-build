@@ -10,5 +10,5 @@ exec nix \
   --extra-experimental-features 'nix-command flakes' \
   run \
   --no-update-lock-file \
-  github:nader-najjar/universal-build/44153f4516ac74619edd7e47bc102a9de54b70ed \
+  github:nader-najjar/universal-build/1ad4719c1839ddfd5cdb7a9d5a8eee1848649c8f \
   -- "$@"

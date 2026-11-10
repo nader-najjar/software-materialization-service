@@ -1,0 +1,43 @@
+name: Materialize Next
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: materialize-next
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  materialize-next:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check Out Service
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: 3c8a851241c35ee0fe1ee984ae91d2488e4f38cd
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+
+      - name: Build Service
+        run: ./universal-build build
+
+      - name: Create Materialization Service Token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ vars.MATERIALIZATION_APP_ID }}
+          private-key: ${{ secrets.MATERIALIZATION_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Materialize Next
+        run: ./execution-script-symlink idiomatic-artifacts '{"operation":"materialize-next"}'
+        working-directory: build/release
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          MATERIALIZER_REGISTRY_REPOSITORY: ${{ github.repository }}
+          PIPELINE_STRUCTURE_STORE_REPOSITORY: ${{ github.repository }}

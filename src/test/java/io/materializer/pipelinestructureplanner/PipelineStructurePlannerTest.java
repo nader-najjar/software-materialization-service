@@ -7,10 +7,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.pipelinestructureplanner.models.MaterializerRegistration;
 import io.materializer.pipelinestructureplanner.models.MaterializerRegistry;
 import io.materializer.pipelinestructureplanner.models.RepositoryPush;
+import io.materializer.shared.PipelineDeclarationFetcher;
 import io.materializer.shared.PipelineStructureStore;
 import io.materializer.shared.models.PipelineStructure;
 import io.materializer.shared.models.RepositorySnapshot;
@@ -37,9 +37,8 @@ class PipelineStructurePlannerTest {
     private final PipelineStructurePlanner pipelineStructurePlanner = new PipelineStructurePlanner(
             materializerRegistryFetcher,
             pipelineStructureStore,
-            new DeclaredPipelineInputsFetcher(gitHub),
-            pushHistoryFetcher,
-            new EnvironmentVariables("test", "owner/registry", "owner/storage", "owner/service")
+            new PipelineDeclarationFetcher(gitHub),
+            pushHistoryFetcher
     );
 
     @Test
@@ -51,12 +50,11 @@ class PipelineStructurePlannerTest {
         when(pushHistoryFetcher.latestOnDefaultBranch("owner/one"))
                 .thenReturn(new RepositorySnapshot("owner/one", "trunk", commitSHA, 42));
         GHContent file = mock(GHContent.class);
-        String pipelineJson = "{\"repositories\":[]}";
+        String pipelineJson = """
+                {"repositories":[],"steps":[{"name":"build","operation":"build"}]}
+                """;
         when(repository.getFileContent("pipeline.json", commitSHA)).thenReturn(file);
         when(file.read()).thenReturn(new ByteArrayInputStream(pipelineJson.getBytes(StandardCharsets.UTF_8)));
-
-        RepositorySnapshot servicePush = new RepositorySnapshot("owner/service", "stable", "d".repeat(40), 107);
-        when(pushHistoryFetcher.latestOnDefaultBranch("owner/service")).thenReturn(servicePush);
 
         List<PipelineStructure> snapshots = pipelineStructurePlanner.planNextStructures();
         assertEquals(1, snapshots.size());
@@ -66,7 +64,6 @@ class PipelineStructurePlannerTest {
                 new RepositorySnapshot("owner/one", "trunk", commitSHA, 42),
                 snapshot.materializerRepositorySnapshot()
         );
-        assertEquals(servicePush, snapshot.serviceRepositorySnapshot());
         assertEquals(List.of(), snapshot.sourceSnapshots());
     }
 
@@ -79,24 +76,35 @@ class PipelineStructurePlannerTest {
     }
 
     @Test
+    void returnsUndispatchedStructureWithoutCheckingForUpdates() {
+        registerMaterializer();
+        PipelineStructure pendingStructure = new PipelineStructure(
+                new RepositorySnapshot("owner/one", "trunk", "a".repeat(40), 42),
+                List.of(new RepositorySnapshot("owner/library", "release", "c".repeat(40), 44)),
+                false
+        );
+        when(pipelineStructureStore.read("owner/one")).thenReturn(Optional.of(pendingStructure));
+
+        assertEquals(List.of(pendingStructure), pipelineStructurePlanner.planNextStructures());
+        verifyNoInteractions(pushHistoryFetcher, gitHub);
+    }
+
+    @Test
     void scansStoredPinsAndReadsInputsOnlyForASelectedMaterializerPush() throws IOException {
         registerMaterializer();
         RepositorySnapshot materializer = new RepositorySnapshot("owner/one", "trunk", "a".repeat(40), 42);
-        RepositorySnapshot service = new RepositorySnapshot("owner/service", "stable", "b".repeat(40), 42);
         RepositorySnapshot source = new RepositorySnapshot("owner/library", "release", "c".repeat(40), 107);
         RepositorySnapshot api = new RepositorySnapshot("owner/api", "main", "f".repeat(40), 106);
-        PipelineStructure snapshot = new PipelineStructure(materializer, service, List.of(source, api));
+        PipelineStructure snapshot = new PipelineStructure(materializer, List.of(source, api), true);
         when(pipelineStructureStore.read("owner/one")).thenReturn(Optional.of(snapshot));
 
         assertEquals(List.of(), pipelineStructurePlanner.planNextStructures());
 
         InOrder lookups = inOrder(pushHistoryFetcher);
-        lookups.verify(pushHistoryFetcher).since(service);
         lookups.verify(pushHistoryFetcher).since(materializer);
         lookups.verify(pushHistoryFetcher).since(source);
         lookups.verify(pushHistoryFetcher).since(api);
 
-        when(pushHistoryFetcher.since(service)).thenReturn(List.of(push(11, 20)));
         when(pushHistoryFetcher.since(materializer)).thenReturn(List.of(push(10, 10)));
         RepositoryPush sourcePush = new RepositoryPush(
                 9,
@@ -113,34 +121,20 @@ class PipelineStructurePlannerTest {
         );
         PipelineStructure expectedSourceUpdate = new PipelineStructure(
                 materializer,
-                service,
-                List.of(nextSource, api)
+                List.of(nextSource, api),
+                false
         );
         assertEquals(List.of(expectedSourceUpdate), pipelineStructurePlanner.planNextStructures());
 
         String nextSHA = "e".repeat(40);
-        RepositoryPush servicePush = new RepositoryPush(108, service.commitSHA(), nextSHA, Instant.ofEpochSecond(5));
-        when(pushHistoryFetcher.since(service)).thenReturn(List.of(servicePush));
-        RepositorySnapshot nextService = new RepositorySnapshot(
-                service.repositoryName(),
-                service.branch(),
-                nextSHA,
-                servicePush.pushID()
-        );
-        PipelineStructure expected = new PipelineStructure(
-                materializer,
-                nextService,
-                snapshot.sourceSnapshots()
-        );
-        assertEquals(List.of(expected), pipelineStructurePlanner.planNextStructures());
-
         RepositoryPush matPush = new RepositoryPush(109, materializer.commitSHA(), nextSHA, Instant.EPOCH);
         when(pushHistoryFetcher.since(materializer)).thenReturn(List.of(matPush));
         verifyNoInteractions(gitHub);
         GHRepository repository = mock(GHRepository.class);
         when(gitHub.getRepository(materializer.repositoryName())).thenReturn(repository);
         String nextConfig = """
-                {"steps":[],"repositories":[{"repositoryName":"owner/library","branch":"release",
+                {"steps":[{"name":"build","operation":"build"}],
+                 "repositories":[{"repositoryName":"owner/library","branch":"release",
                   "build_system":"universal","platforms":["x86_64-linux"]},
                  {"repositoryName":"owner/new-api","branch":"main",
                   "build_system":"universal","platforms":["x86_64-linux"]}]}
@@ -161,8 +155,8 @@ class PipelineStructurePlannerTest {
         );
         PipelineStructure matUpdate = new PipelineStructure(
                 nextMaterializer,
-                service,
-                List.of(source, added)
+                List.of(source, added),
+                false
         );
         assertEquals(List.of(matUpdate), pipelineStructurePlanner.planNextStructures());
         assertThrows(IllegalArgumentException.class, pipelineStructurePlanner::planNextStructures);
@@ -188,7 +182,8 @@ class PipelineStructurePlannerTest {
         GHRepository repository = mock(GHRepository.class);
         GHContent pipelineFile = mock(GHContent.class);
         String pipelineJson = """
-                {"repositories":[{"repositoryName":"owner/source","branch":"release",
+                {"steps":[{"name":"build","operation":"build"}],
+                 "repositories":[{"repositoryName":"owner/source","branch":"release",
                   "build_system":"universal","platforms":["x86_64-linux"]}]}
                 """;
         when(gitHub.getRepository(materializerSnapshot.repositoryName())).thenReturn(repository);

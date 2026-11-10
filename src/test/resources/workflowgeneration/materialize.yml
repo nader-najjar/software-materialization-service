@@ -1,0 +1,77 @@
+# Illustrative two-repository pipeline.
+name: Materialize
+
+on:
+  push:
+    branches: [execution]
+
+concurrency:
+  group: materialize
+  queue: single
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  step_1:
+    name: Build ${{ matrix.repositoryName }} (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repositoryName: nader-najjar/pure-java
+            commitSHA: 28e79fd674af4ba6387765247272fed25578430d
+            buildSystem: universal
+            platform: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - repositoryName: nader-najjar/pure-java
+            commitSHA: 28e79fd674af4ba6387765247272fed25578430d
+            buildSystem: universal
+            platform: x86_64-linux
+            runner: ubuntu-24.04
+          - repositoryName: nader-najjar/pure-javascript
+            commitSHA: e90d63d9b81312d83738bb1654442d54ad40e36e
+            buildSystem: universal
+            platform: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - repositoryName: nader-najjar/pure-javascript
+            commitSHA: e90d63d9b81312d83738bb1654442d54ad40e36e
+            buildSystem: universal
+            platform: x86_64-linux
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Reject Manual Retries
+        uses: $/.github/actions/reject-manual-retries
+
+      - name: Reject Unsupported Build Systems
+        if: matrix.buildSystem != 'universal'
+        run: |
+          echo "::error::Unsupported build system: $BUILD_SYSTEM"
+          exit 1
+        env:
+          BUILD_SYSTEM: ${{ matrix.buildSystem }}
+
+      - name: Check Out ${{ matrix.repositoryName }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ matrix.repositoryName }}
+          ref: ${{ matrix.commitSHA }}
+          persist-credentials: "false"
+
+      - name: Build ${{ matrix.repositoryName }}
+        if: matrix.buildSystem == 'universal'
+        uses: $/.github/actions/universal-build
+
+      - name: Set Artifact Repository Name
+        run: echo "ARTIFACT_REPOSITORY=${REPOSITORY_NAME/\//@}" >> "$GITHUB_ENV"
+        env:
+          REPOSITORY_NAME: ${{ matrix.repositoryName }}
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ env.ARTIFACT_REPOSITORY }}-${{ matrix.platform }}-${{ matrix.commitSHA }}
+          path: build/release-artifact.tar.gz
+          if-no-files-found: error

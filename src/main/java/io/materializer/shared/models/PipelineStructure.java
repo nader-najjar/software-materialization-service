@@ -16,20 +16,22 @@ public record PipelineStructure(
         @Valid
         RepositorySnapshot materializerRepositorySnapshot,
 
-        @JsonProperty("serviceRepositorySnapshot")
-        @NotNull
-        @Valid
-        RepositorySnapshot serviceRepositorySnapshot,
-
         @JsonProperty("sourceSnapshots")
         @NotNull
         @UniqueSourceSnapshotsByRepositoryAndBranch
-        List<@NotNull @Valid RepositorySnapshot> sourceSnapshots
+        List<@NotNull @Valid RepositorySnapshot> sourceSnapshots,
+
+        @JsonProperty("dispatched")
+        boolean dispatched
 
 ) {
     public PipelineStructure {
         sourceSnapshots = sourceSnapshots == null
                 ? null
                 : Collections.unmodifiableList(new ArrayList<>(sourceSnapshots));
+    }
+
+    public PipelineStructure withDispatchMarked() {
+        return new PipelineStructure(materializerRepositorySnapshot, sourceSnapshots, true);
     }
 }

@@ -32,7 +32,7 @@ class MaterializerRegistryFetcherTest {
     private final MaterializerRegistryFetcher materializerRegistryFetcher = new MaterializerRegistryFetcher(
             gitHub,
             new EnvironmentVariables(
-                    "test", REGISTRY_REPOSITORY, "owner/storage", "owner/service"
+                    "test", REGISTRY_REPOSITORY, "owner/storage"
             )
     );
 

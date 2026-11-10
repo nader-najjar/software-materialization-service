@@ -1,0 +1,11 @@
+name: Universal Build
+description: Build the checked-out source repository with Universal Build.
+runs:
+  using: composite
+  steps:
+    - name: Install Nix
+      uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+
+    - name: Build
+      run: ./universal-build build
+      shell: bash

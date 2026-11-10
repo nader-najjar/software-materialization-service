@@ -1,4 +1,4 @@
-package io.materializer.pipelinestructureplanner;
+package io.materializer.shared;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,26 +7,26 @@ import java.nio.charset.StandardCharsets;
 
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.materializer.pipelinestructureplanner.models.DeclaredPipelineInputs;
+import io.materializer.shared.models.PipelineDeclaration;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.JsonSanitizer;
 import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
-public class DeclaredPipelineInputsFetcher {
+public class PipelineDeclarationFetcher {
 
     private final GitHub gitHub;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Guice manages the shared GitHub client")
     @Inject
-    public DeclaredPipelineInputsFetcher(GitHub gitHub) {
+    public PipelineDeclarationFetcher(GitHub gitHub) {
         this.gitHub = gitHub;
     }
 
-    public DeclaredPipelineInputs fetch(RepositorySnapshot materializerSnapshot) {
+    public PipelineDeclaration fetch(RepositorySnapshot materializerSnapshot) {
         String pipelineJson = readPipelineJson(materializerSnapshot.repositoryName(), materializerSnapshot.commitSHA());
-        return JsonSanitizer.parseAndValidate(pipelineJson, DeclaredPipelineInputs.class);
+        return JsonSanitizer.parseAndValidate(pipelineJson, PipelineDeclaration.class);
     }
 
     private String readPipelineJson(String repositoryName, String commitSHA) {

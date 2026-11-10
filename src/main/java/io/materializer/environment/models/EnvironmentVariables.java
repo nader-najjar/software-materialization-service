@@ -14,12 +14,7 @@ public record EnvironmentVariables(
 
         @NotBlank
         @Pattern(regexp = "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
-        String pipelineStructureStoreRepository,
-
-        @NotBlank
-        @Pattern(regexp = "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
-        String materializationServiceRepository
-
+        String pipelineStructureStoreRepository
 ) {
     @Override
     public String toString() {

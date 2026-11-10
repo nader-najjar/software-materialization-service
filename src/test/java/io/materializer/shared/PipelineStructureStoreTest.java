@@ -43,7 +43,7 @@ class PipelineStructureStoreTest {
 
     private final PipelineStructureStore pipelineStructureStore = new PipelineStructureStore(
             gitHub,
-            new EnvironmentVariables("test", "owner/registry", "owner/service", "owner/runner")
+            new EnvironmentVariables("test", "owner/registry", "owner/service")
     );
 
     @Test
@@ -148,8 +148,8 @@ class PipelineStructureStoreTest {
     void readsAndValidatesTheStoredStructureAtTheRequestedRevision() throws IOException {
         PipelineStructure expected = new PipelineStructure(
                 new RepositorySnapshot("owner/pipeline", "main", "a".repeat(40), 42),
-                new RepositorySnapshot("owner/service", "stable", "b".repeat(40), 42),
-                List.of()
+                List.of(),
+                false
         );
 
         String json = JsonMapperUtility.MAPPER.writeValueAsString(expected);
@@ -193,8 +193,8 @@ class PipelineStructureStoreTest {
     void rejectsPipelineStructuresForADifferentMaterializer() throws IOException {
         PipelineStructure structure = new PipelineStructure(
                 new RepositorySnapshot("owner/other", "main", "a".repeat(40), 42),
-                new RepositorySnapshot("owner/service", "stable", "b".repeat(40), 42),
-                List.of()
+                List.of(),
+                false
         );
 
         stubStructureFile(JsonMapperUtility.MAPPER.writeValueAsString(structure));
@@ -211,8 +211,8 @@ class PipelineStructureStoreTest {
         String nextSHA = "d".repeat(40);
         PipelineStructure structure = new PipelineStructure(
                 new RepositorySnapshot("Owner/Pipeline", "main", "a".repeat(40), 42),
-                new RepositorySnapshot("owner/service", "main", "b".repeat(40), 43),
-                List.of()
+                List.of(),
+                false
         );
         String path = "pipeline-structures/owner/pipeline.json";
         String json = JsonMapperUtility.MAPPER.writeValueAsString(structure);
@@ -256,6 +256,12 @@ class PipelineStructureStoreTest {
         when(entry.getType()).thenReturn("blob");
         when(entry.readAsBlob()).thenReturn(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
         assertEquals(structure, pipelineStructureStore.read("owner/pipeline").orElseThrow());
+
+        when(repository.getCommit(nextSHA)).thenReturn(nextCommit);
+        when(nextCommit.getTree()).thenReturn(updatedTree);
+        pipelineStructureStore.write(structure);
+        verify(repository, times(2)).createCommit();
+        verify(branchRef, times(2)).updateTo(nextSHA, false);
     }
 
     private GHTree stubStructureTree() throws IOException {

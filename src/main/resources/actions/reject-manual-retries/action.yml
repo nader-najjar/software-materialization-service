@@ -1,0 +1,8 @@
+name: Reject Manual Retries
+description: Direct manual retries through the service's Bounce operation.
+runs:
+  using: composite
+  steps:
+    - name: Reject Manual Retries
+      run: bash "$GITHUB_ACTION_PATH/check.sh"
+      shell: bash
