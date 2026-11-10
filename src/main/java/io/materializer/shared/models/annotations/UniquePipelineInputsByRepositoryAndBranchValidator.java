@@ -1,23 +1,23 @@
-package io.materializer.pipelinestructureplanner.models.annotations;
+package io.materializer.shared.models.annotations;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import io.materializer.pipelinestructureplanner.models.PipelineInput;
+import io.materializer.shared.models.DeclaredPipelineInput;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 public class UniquePipelineInputsByRepositoryAndBranchValidator
-        implements ConstraintValidator<UniquePipelineInputsByRepositoryAndBranch, List<PipelineInput>> {
+        implements ConstraintValidator<UniquePipelineInputsByRepositoryAndBranch, List<DeclaredPipelineInput>> {
 
     @Override
-    public boolean isValid(List<PipelineInput> repositories, ConstraintValidatorContext context) {
+    public boolean isValid(List<DeclaredPipelineInput> repositories, ConstraintValidatorContext context) {
         if (repositories == null) { return true; }
 
         Set<RepositoryBranch> seen = new HashSet<>();
-        for (PipelineInput input : repositories) {
+        for (DeclaredPipelineInput input : repositories) {
             if (input == null || input.repositoryName() == null || input.branch() == null) { continue; }
 
             String repositoryName = input.repositoryName().toLowerCase(Locale.ROOT);

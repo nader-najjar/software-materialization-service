@@ -43,7 +43,7 @@
         in
         {
           runtime = pkgs.writeShellApplication {
-            name = "ignite";
+            name = "execute";
             runtimeInputs = [ pkgs.jdk25_headless ];
             runtimeEnv.JAVA_HOME = "${pkgs.jdk25_headless}";
             text = ''

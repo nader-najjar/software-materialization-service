@@ -1,4 +1,4 @@
-package io.materializer.pipelinestructureplanner.models;
+package io.materializer.shared.models;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 
-public record PipelineInput(
+public record DeclaredPipelineInput(
 
         @JsonProperty("repositoryName")
         @NotBlank
@@ -29,7 +29,7 @@ public record PipelineInput(
         List<@NotBlank String> platforms
 
 ) {
-    public PipelineInput {
+    public DeclaredPipelineInput {
         platforms = platforms == null
                 ? null
                 : Collections.unmodifiableList(new ArrayList<>(platforms));

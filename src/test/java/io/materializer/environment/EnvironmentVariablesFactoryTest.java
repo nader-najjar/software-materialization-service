@@ -20,8 +20,7 @@ class EnvironmentVariablesFactoryTest {
         EnvironmentVariables environment = EnvironmentVariablesFactory.from(Map.of(
                 "GITHUB_TOKEN", "example-token",
                 "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
-                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage",
-                "MATERIALIZATION_SERVICE_REPOSITORY", "owner/service"
+                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage"
         ));
 
         assertEquals("example-token", environment.githubToken());
@@ -31,12 +30,11 @@ class EnvironmentVariablesFactoryTest {
     }
 
     @Test
-    void rejectsInvalidServiceRepository() {
+    void rejectsInvalidStorageRepository() {
         Map<String, String> environment = Map.of(
                 "GITHUB_TOKEN", "example-token",
                 "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
-                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage",
-                "MATERIALIZATION_SERVICE_REPOSITORY", "invalid"
+                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "invalid"
         );
 
         assertThrows(EnvironmentVariableException.class, () -> EnvironmentVariablesFactory.from(environment));

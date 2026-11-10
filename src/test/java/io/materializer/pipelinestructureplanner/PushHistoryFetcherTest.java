@@ -33,7 +33,7 @@ class PushHistoryFetcherTest {
     private final PushHistoryFetcher pushHistoryFetcher = new PushHistoryFetcher(
             gitHub,
             httpClient,
-            new EnvironmentVariables("test", REPO, REPO, REPO)
+            new EnvironmentVariables("test", REPO, REPO)
     );
 
     @Test

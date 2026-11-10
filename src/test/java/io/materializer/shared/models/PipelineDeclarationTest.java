@@ -1,4 +1,4 @@
-package io.materializer.pipelinestructureplanner.models;
+package io.materializer.shared.models;
 
 import io.materializer.shared.utilities.JsonSanitizer;
 import org.junit.jupiter.api.Test;
@@ -8,21 +8,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class DeclaredPipelineInputsTest {
+class PipelineDeclarationTest {
 
     private static final String PIPELINE_JSON = """
-            {"steps":[{"name":"build","operation":"build","software":"all","platforms":"all"}],
+            {"steps":[{"name":"build","operation":"build"}],
              "repositories":[{"repositoryName":"owner/pure-java","branch":"main",
               "build_system":"universal","platforms":["aarch64-linux","x86_64-linux"]}]}
             """;
 
     @Test
-    void readsConfiguredRepositories() {
-        DeclaredPipelineInputs declaredInputs = JsonSanitizer.parseAndValidate(
+    void readsConfiguredRepositoriesAndSteps() {
+        PipelineDeclaration pipelineDeclaration = JsonSanitizer.parseAndValidate(
                 PIPELINE_JSON,
-                DeclaredPipelineInputs.class
+                PipelineDeclaration.class
         );
-        PipelineInput repository = declaredInputs.repositories().getFirst();
+        assertEquals(new DeclaredPipelineStep("build", "build"), pipelineDeclaration.steps().getFirst());
+        DeclaredPipelineInput repository = pipelineDeclaration.repositories().getFirst();
         assertEquals("owner/pure-java", repository.repositoryName());
         assertEquals("universal", repository.buildSystem());
     }
@@ -32,12 +33,29 @@ class DeclaredPipelineInputsTest {
         "null",
         "{}",
         "[]",
+        "{\"repositories\":[],\"steps\":[null]}",
+        "{\"repositories\":[],\"steps\":[{}]}",
         "{\"steps\":[],\"repositories\":null}",
         "{\"steps\":[],\"repositories\":[null]}",
         "{\"steps\":[],\"repositories\":[{}]}"
     })
     void rejectsInvalidConfiguration(String json) {
         assertInvalid(json);
+    }
+
+    @Test
+    void requiresExactlyOneBuildStepAtTheStart() {
+        String build = """
+                {"name":"Compile Libraries","operation":"build"}
+                """.strip();
+        String deploy = build.replace("build", "deploy").replace("Compile Libraries", "build");
+        String declaration = "{\"repositories\":[],\"steps\":[%s]}";
+
+        assertInvalid(declaration.formatted(""));
+        assertInvalid(declaration.formatted(deploy));
+        assertInvalid(declaration.formatted(deploy + "," + build));
+        assertInvalid(declaration.formatted(build + "," + build));
+        JsonSanitizer.parseAndValidate(declaration.formatted(build + "," + deploy), PipelineDeclaration.class);
     }
 
     @Test
@@ -49,7 +67,8 @@ class DeclaredPipelineInputsTest {
     @Test
     void requiresDistinctBranchesForRepeatedRepositories() {
         String entries = """
-                {"steps":[],"repositories":[
+                {"steps":[{"name":"build","operation":"build"}],
+                 "repositories":[
                   {"repositoryName":"owner/repo","branch":"main",
                    "build_system":"universal","platforms":["linux"]},
                   {"repositoryName":"OWNER/REPO","branch":"%s",
@@ -58,17 +77,17 @@ class DeclaredPipelineInputsTest {
                 """.strip();
 
         assertInvalid(entries.formatted("main"));
-        DeclaredPipelineInputs declaredInputs = JsonSanitizer.parseAndValidate(
+        PipelineDeclaration pipelineDeclaration = JsonSanitizer.parseAndValidate(
                 entries.formatted("Main"),
-                DeclaredPipelineInputs.class
+                PipelineDeclaration.class
         );
-        assertEquals(2, declaredInputs.repositories().size());
+        assertEquals(2, pipelineDeclaration.repositories().size());
     }
 
     private void assertInvalid(String json) {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> JsonSanitizer.parseAndValidate(json, DeclaredPipelineInputs.class)
+                () -> JsonSanitizer.parseAndValidate(json, PipelineDeclaration.class)
         );
     }
 }

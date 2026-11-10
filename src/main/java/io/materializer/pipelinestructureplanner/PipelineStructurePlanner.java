@@ -8,15 +8,15 @@ import java.util.stream.IntStream;
 
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.materializer.environment.models.EnvironmentVariables;
-import io.materializer.pipelinestructureplanner.models.DeclaredPipelineInputs;
 import io.materializer.pipelinestructureplanner.models.MaterializerRegistration;
 import io.materializer.pipelinestructureplanner.models.MaterializerRegistry;
-import io.materializer.pipelinestructureplanner.models.PipelineInput;
 import io.materializer.pipelinestructureplanner.models.PushCandidate;
 import io.materializer.pipelinestructureplanner.models.RepositoryPush;
 import io.materializer.pipelinestructureplanner.models.RepositoryRole;
+import io.materializer.shared.PipelineDeclarationFetcher;
 import io.materializer.shared.PipelineStructureStore;
+import io.materializer.shared.models.DeclaredPipelineInput;
+import io.materializer.shared.models.PipelineDeclaration;
 import io.materializer.shared.models.PipelineStructure;
 import io.materializer.shared.models.RepositorySnapshot;
 
@@ -24,24 +24,21 @@ public class PipelineStructurePlanner {
 
     private final MaterializerRegistryFetcher materializerRegistryFetcher;
     private final PipelineStructureStore pipelineStructureStore;
-    private final DeclaredPipelineInputsFetcher declaredPipelineInputsFetcher;
+    private final PipelineDeclarationFetcher pipelineDeclarationFetcher;
     private final PushHistoryFetcher pushHistoryFetcher;
-    private final String materializationServiceRepository;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The injected store keeps no per-run state")
     @Inject
     public PipelineStructurePlanner(
             MaterializerRegistryFetcher materializerRegistryFetcher,
             PipelineStructureStore pipelineStructureStore,
-            DeclaredPipelineInputsFetcher declaredPipelineInputsFetcher,
-            PushHistoryFetcher pushHistoryFetcher,
-            EnvironmentVariables environmentVariables
+            PipelineDeclarationFetcher pipelineDeclarationFetcher,
+            PushHistoryFetcher pushHistoryFetcher
     ) {
         this.materializerRegistryFetcher = materializerRegistryFetcher;
         this.pipelineStructureStore = pipelineStructureStore;
-        this.declaredPipelineInputsFetcher = declaredPipelineInputsFetcher;
+        this.pipelineDeclarationFetcher = pipelineDeclarationFetcher;
         this.pushHistoryFetcher = pushHistoryFetcher;
-        this.materializationServiceRepository = environmentVariables.materializationServiceRepository();
     }
 
     public List<PipelineStructure> planNextStructures() {
@@ -63,6 +60,9 @@ public class PipelineStructurePlanner {
         if (currentStructure.isEmpty()) {
             return Optional.of(initialize(materializerRegistration));
 
+        } else if (!currentStructure.get().dispatched()) {
+            return currentStructure;
+
         } else {
             return advance(currentStructure.get());
         }
@@ -76,9 +76,7 @@ public class PipelineStructurePlanner {
                 List.of()
         );
 
-        RepositorySnapshot serviceSnapshot = pushHistoryFetcher.latestOnDefaultBranch(materializationServiceRepository);
-
-        return new PipelineStructure(materializerSnapshot, serviceSnapshot, sourceSnapshots);
+        return new PipelineStructure(materializerSnapshot, sourceSnapshots, false);
     }
 
     private Optional<PipelineStructure> advance(PipelineStructure currentStructure) {
@@ -89,15 +87,10 @@ public class PipelineStructurePlanner {
     }
 
     private Optional<PushCandidate> findOldestPushCandidate(PipelineStructure currentStructure) {
-        RepositorySnapshot serviceSnapshot = currentStructure.serviceRepositorySnapshot();
-        List<PushCandidate> serviceCandidates = fetchCandidates(serviceSnapshot, RepositoryRole.SERVICE);
-
         RepositorySnapshot materializerSnapshot = currentStructure.materializerRepositorySnapshot();
         List<PushCandidate> materializerCandidates = fetchCandidates(materializerSnapshot, RepositoryRole.MATERIALIZER);
 
-        List<PushCandidate> candidates = new ArrayList<>();
-        candidates.addAll(serviceCandidates);
-        candidates.addAll(materializerCandidates);
+        List<PushCandidate> candidates = new ArrayList<>(materializerCandidates);
         for (RepositorySnapshot sourceSnapshot : currentStructure.sourceSnapshots()) {
             List<PushCandidate> sourceCandidates = fetchCandidates(sourceSnapshot, RepositoryRole.SOURCE);
             candidates.addAll(sourceCandidates);
@@ -126,21 +119,9 @@ public class PipelineStructurePlanner {
                 push.pushID()
         );
         return switch (selectedCandidate.role()) {
-            case SERVICE -> applyServicePush(currentStructure, nextRepositorySnapshot);
             case MATERIALIZER -> applyMaterializerPush(currentStructure, nextRepositorySnapshot);
             case SOURCE -> applySourcePush(currentStructure, nextRepositorySnapshot);
         };
-    }
-
-    private PipelineStructure applyServicePush(
-            PipelineStructure currentStructure,
-            RepositorySnapshot serviceSnapshot
-    ) {
-        return new PipelineStructure(
-                currentStructure.materializerRepositorySnapshot(),
-                serviceSnapshot,
-                currentStructure.sourceSnapshots()
-        );
     }
 
     private PipelineStructure applyMaterializerPush(
@@ -153,8 +134,8 @@ public class PipelineStructurePlanner {
         );
         return new PipelineStructure(
                 materializerSnapshot,
-                currentStructure.serviceRepositorySnapshot(),
-                sourceSnapshots
+                sourceSnapshots,
+                false
         );
     }
 
@@ -173,8 +154,8 @@ public class PipelineStructurePlanner {
         sourceSnapshots.set(sourceIndex, nextSourceSnapshot);
         return new PipelineStructure(
                 currentStructure.materializerRepositorySnapshot(),
-                currentStructure.serviceRepositorySnapshot(),
-                sourceSnapshots
+                sourceSnapshots,
+                false
         );
     }
 
@@ -193,9 +174,9 @@ public class PipelineStructurePlanner {
             RepositorySnapshot materializerSnapshot,
             List<RepositorySnapshot> previousPins
     ) {
-        DeclaredPipelineInputs declaredInputs = declaredPipelineInputsFetcher.fetch(materializerSnapshot);
+        PipelineDeclaration pipelineDeclaration = pipelineDeclarationFetcher.fetch(materializerSnapshot);
         List<RepositorySnapshot> repositorySnapshots = new ArrayList<>();
-        for (PipelineInput source : declaredInputs.repositories()) {
+        for (DeclaredPipelineInput source : pipelineDeclaration.repositories()) {
             RepositorySnapshot repositorySnapshot = previousPins.stream()
                     .filter(candidate -> matchesBranch(candidate, source.repositoryName(), source.branch()))
                     .findFirst()

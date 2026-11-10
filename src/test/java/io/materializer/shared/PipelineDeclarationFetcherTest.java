@@ -1,4 +1,4 @@
-package io.materializer.pipelinestructureplanner;
+package io.materializer.shared;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,11 +19,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class DeclaredPipelineInputsFetcherTest {
+class PipelineDeclarationFetcherTest {
 
     private final GitHub gitHub = mock(GitHub.class);
-    private final DeclaredPipelineInputsFetcher declaredPipelineInputsFetcher =
-            new DeclaredPipelineInputsFetcher(gitHub);
+    private final PipelineDeclarationFetcher pipelineDeclarationFetcher =
+            new PipelineDeclarationFetcher(gitHub);
     private final RepositorySnapshot materializerSnapshot = new RepositorySnapshot(
             "owner/materializer",
             "main",
@@ -40,7 +40,7 @@ class DeclaredPipelineInputsFetcherTest {
         when(repository.getFileContent("pipeline.json", materializerSnapshot.commitSHA())).thenReturn(pipelineFile);
         when(pipelineFile.read()).thenReturn(content);
 
-        assertThrows(IllegalArgumentException.class, () -> declaredPipelineInputsFetcher.fetch(materializerSnapshot));
+        assertThrows(IllegalArgumentException.class, () -> pipelineDeclarationFetcher.fetch(materializerSnapshot));
         verify(content).close();
     }
 
@@ -51,7 +51,7 @@ class DeclaredPipelineInputsFetcherTest {
 
         UncheckedIOException exception = assertThrows(
                 UncheckedIOException.class,
-                () -> declaredPipelineInputsFetcher.fetch(materializerSnapshot)
+                () -> pipelineDeclarationFetcher.fetch(materializerSnapshot)
         );
 
         assertSame(failure, exception.getCause());

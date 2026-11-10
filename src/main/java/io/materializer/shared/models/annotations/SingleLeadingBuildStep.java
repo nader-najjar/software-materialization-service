@@ -1,4 +1,4 @@
-package io.materializer.pipelinestructureplanner.models.annotations;
+package io.materializer.shared.models.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,10 +10,10 @@ import jakarta.validation.Payload;
 
 @Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = UniquePipelineInputsByRepositoryAndBranchValidator.class)
-public @interface UniquePipelineInputsByRepositoryAndBranch {
+@Constraint(validatedBy = SingleLeadingBuildStepValidator.class)
+public @interface SingleLeadingBuildStep {
 
-    String message() default "Each repository and branch pair must be unique";
+    String message() default "The first operation must be build and it may appear only once";
 
     Class<?>[] groups() default {};
 

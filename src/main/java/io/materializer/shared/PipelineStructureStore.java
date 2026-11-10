@@ -71,6 +71,8 @@ public final class PipelineStructureStore {
                     .baseTree(baseTreeSHA)
                     .add(structureFilePath, structureJson, false)
                     .create();
+            if (baseTreeSHA.equals(updatedTree.getSha())) { return; }
+
             GHCommit commit = repository.createCommit()
                     .message("Store pipeline structure for " + materializerRepository)
                     .parent(parentCommitSHA)
