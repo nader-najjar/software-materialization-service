@@ -18,7 +18,7 @@ jobs:
       - name: Check Out Service
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 195fdc5ebbf580294885e942666075bb17d0b7b5
+          ref: db7da603b621abd370a693870dd4a4688a890107
           persist-credentials: false
 
       - name: Install Nix
