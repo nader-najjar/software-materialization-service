@@ -18,7 +18,7 @@ jobs:
       - name: Check Out Service
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: db7da603b621abd370a693870dd4a4688a890107
+          ref: 2dabbd60626eec890a5b6940e1528e9bdf8e3e82
           persist-credentials: false
 
       - name: Install Nix
@@ -31,7 +31,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.MATERIALIZATION_APP_ID }}
+          client-id: ${{ vars.MATERIALIZATION_APP_CLIENT_ID }}
           private-key: ${{ secrets.MATERIALIZATION_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
