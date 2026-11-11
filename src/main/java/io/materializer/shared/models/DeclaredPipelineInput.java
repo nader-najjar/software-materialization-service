@@ -22,11 +22,15 @@ public record DeclaredPipelineInput(
 
         @JsonProperty("build_system")
         @NotBlank
+        @Pattern(regexp = "universal", message = "Supported build system: universal")
         String buildSystem,
 
         @JsonProperty("platforms")
         @NotEmpty
-        List<@NotBlank String> platforms
+        List<@NotBlank @Pattern(
+                regexp = "aarch64-linux|x86_64-linux",
+                message = "Supported platforms: aarch64-linux, x86_64-linux"
+        ) String> platforms
 
 ) {
     public DeclaredPipelineInput {

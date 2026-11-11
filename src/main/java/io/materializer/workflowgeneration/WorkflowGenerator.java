@@ -6,31 +6,31 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Inject;
-import io.materializer.shared.PipelineDeclarationFetcher;
+import io.materializer.shared.LivePipelineDeclarationFetcher;
 import io.materializer.shared.models.DeclaredPipelineInput;
 import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.PipelineDeclaration;
-import io.materializer.shared.models.PipelineStructure;
+import io.materializer.shared.models.LivePipelineDeclaration;
+import io.materializer.shared.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.YamlMapperUtility;
 import io.materializer.workflowgeneration.models.Workflow;
 
 public class WorkflowGenerator {
 
-    private final PipelineDeclarationFetcher pipelineDeclarationFetcher;
+    private final LivePipelineDeclarationFetcher livePipelineDeclarationFetcher;
     private final BuildJobGenerator buildJobGenerator;
 
     @Inject
     public WorkflowGenerator(
-            PipelineDeclarationFetcher pipelineDeclarationFetcher,
+            LivePipelineDeclarationFetcher livePipelineDeclarationFetcher,
             BuildJobGenerator buildJobGenerator
     ) {
-        this.pipelineDeclarationFetcher = pipelineDeclarationFetcher;
+        this.livePipelineDeclarationFetcher = livePipelineDeclarationFetcher;
         this.buildJobGenerator = buildJobGenerator;
     }
 
-    public String generate(PipelineStructure structure) {
-        Workflow workflow = generateWorkflow(structure);
+    public String generate(LivePipelineInputs inputs) {
+        Workflow workflow = generateWorkflow(inputs);
         try {
             return YamlMapperUtility.MAPPER.writeValueAsString(workflow);
 
@@ -39,19 +39,19 @@ public class WorkflowGenerator {
         }
     }
 
-    Workflow generateWorkflow(PipelineStructure structure) {
-        PipelineDeclaration pipelineDeclaration = pipelineDeclarationFetcher.fetch(
-                structure.materializerRepositorySnapshot()
+    Workflow generateWorkflow(LivePipelineInputs inputs) {
+        LivePipelineDeclaration livePipelineDeclaration = livePipelineDeclarationFetcher.fetchAndValidate(
+                inputs.materializerRepositorySnapshot()
         );
 
         Map<String, Object> jobs = new LinkedHashMap<>();
-        for (int index = 0; index < pipelineDeclaration.steps().size(); index++) {
-            DeclaredPipelineStep step = pipelineDeclaration.steps().get(index);
+        for (int index = 0; index < livePipelineDeclaration.steps().size(); index++) {
+            DeclaredPipelineStep step = livePipelineDeclaration.steps().get(index);
 
             Object job = generateJob(
                     step,
-                    pipelineDeclaration.repositories(),
-                    structure.sourceSnapshots()
+                    livePipelineDeclaration.repositories(),
+                    inputs.declaredRepositorySnapshots()
             );
 
             String jobID = "step_" + (index + 1);
@@ -68,10 +68,10 @@ public class WorkflowGenerator {
     private Object generateJob(
             DeclaredPipelineStep step,
             List<DeclaredPipelineInput> repositories,
-            List<RepositorySnapshot> sourceSnapshots
+            List<RepositorySnapshot> declaredRepositorySnapshots
     ) {
         return switch (step.operation()) {
-            case "build" -> buildJobGenerator.generate(step, repositories, sourceSnapshots);
+            case "build" -> buildJobGenerator.generate(step, repositories, declaredRepositorySnapshots);
             default -> throw new IllegalArgumentException("Unsupported pipeline operation: " + step.operation());
         };
     }

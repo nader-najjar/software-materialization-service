@@ -21,9 +21,9 @@ public class BuildJobGenerator {
     public BuildJob generate(
             DeclaredPipelineStep step,
             List<DeclaredPipelineInput> repositories,
-            List<RepositorySnapshot> sourceSnapshots
+            List<RepositorySnapshot> declaredRepositorySnapshots
     ) {
-        List<BuildMatrixRow> matrixRows = generateBuildMatrixRows(repositories, sourceSnapshots);
+        List<BuildMatrixRow> matrixRows = generateBuildMatrixRows(repositories, declaredRepositorySnapshots);
         BuildJob.Matrix matrix = new BuildJob.Matrix(matrixRows);
         BuildJob.Strategy strategy = new BuildJob.Strategy(false, matrix);
 
@@ -46,11 +46,11 @@ public class BuildJobGenerator {
 
     static List<BuildMatrixRow> generateBuildMatrixRows(
             List<DeclaredPipelineInput> repositories,
-            List<RepositorySnapshot> sourceSnapshots
+            List<RepositorySnapshot> declaredRepositorySnapshots
     ) {
         List<BuildMatrixRow> rows = new ArrayList<>();
         for (DeclaredPipelineInput repository : repositories) {
-            rows.addAll(generateRepositoryMatrixRows(repository, sourceSnapshots));
+            rows.addAll(generateRepositoryMatrixRows(repository, declaredRepositorySnapshots));
         }
         return rows.stream().distinct().toList();
     }
@@ -133,9 +133,9 @@ public class BuildJobGenerator {
 
     private static List<BuildMatrixRow> generateRepositoryMatrixRows(
             DeclaredPipelineInput repository,
-            List<RepositorySnapshot> sourceSnapshots
+            List<RepositorySnapshot> declaredRepositorySnapshots
     ) {
-        RepositorySnapshot snapshot = sourceSnapshots.stream()
+        RepositorySnapshot snapshot = declaredRepositorySnapshots.stream()
                 .filter(pin -> pin.repositoryName().equalsIgnoreCase(repository.repositoryName()))
                 .filter(pin -> pin.branch().equals(repository.branch()))
                 .findFirst()
