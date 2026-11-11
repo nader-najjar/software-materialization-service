@@ -1,0 +1,32 @@
+[
+  {
+    "id": 49784801818,
+    "node_id": "PSH_kwLOVIag-88AAAALl2fKGg",
+    "before": "d229185fce08f9fefd8c3ae17c1b421eaeb37f67",
+    "after": "744fb8afe3e7d97de93bf982efad2db10fef9133",
+    "ref": "refs/heads/main",
+    "timestamp": "2026-11-10T23:39:46Z",
+    "activity_type": "pr_merge",
+    "actor": {
+      "login": "nader-najjar",
+      "id": 243668932,
+      "node_id": "U_kgDODoYXxA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/243668932?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/nader-najjar",
+      "html_url": "https://github.com/nader-najjar",
+      "followers_url": "https://api.github.com/users/nader-najjar/followers",
+      "following_url": "https://api.github.com/users/nader-najjar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/nader-najjar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/nader-najjar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/nader-najjar/subscriptions",
+      "organizations_url": "https://api.github.com/users/nader-najjar/orgs",
+      "repos_url": "https://api.github.com/users/nader-najjar/repos",
+      "events_url": "https://api.github.com/users/nader-najjar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/nader-najjar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    }
+  }
+]

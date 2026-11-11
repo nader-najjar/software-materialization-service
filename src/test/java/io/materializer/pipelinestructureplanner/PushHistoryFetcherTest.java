@@ -5,12 +5,15 @@ import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.pipelinestructureplanner.models.RepositoryPush;
 import io.materializer.shared.models.RepositorySnapshot;
+import io.materializer.shared.utilities.JsonMapperUtility;
+import io.materializer.shared.utilities.ResourceUtility;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -35,6 +38,21 @@ class PushHistoryFetcherTest {
             httpClient,
             new EnvironmentVariables("test", REPO, REPO)
     );
+
+    @Test
+    void readsCapturedGitHubActivityFields() throws IOException {
+        // Captured from GitHub's pure-materializer activity endpoint, not generated from our model.
+        String json = ResourceUtility.readString("/pipelinestructureplanner/repository-activity.json");
+        RepositoryPush[] pushes = JsonMapperUtility.MAPPER.readValue(json, RepositoryPush[].class);
+
+        RepositoryPush expected = new RepositoryPush(
+                49784801818L,
+                "d229185fce08f9fefd8c3ae17c1b421eaeb37f67",
+                "744fb8afe3e7d97de93bf982efad2db10fef9133",
+                Instant.parse("2026-11-10T23:39:46Z")
+        );
+        assertEquals(List.of(expected), List.of(pushes));
+    }
 
     @Test
     void propagatesRepositoryLookupFailures() throws IOException {
@@ -81,7 +99,7 @@ class PushHistoryFetcherTest {
 
     private String push(long id, String before, String after) {
         return """
-                {"id":%d,"before":"%s","after":"%s","pushed_at":"2026-11-07T01:00:00Z"}
+                {"id":%d,"before":"%s","after":"%s","timestamp":"2026-11-07T01:00:00Z"}
                 """.strip().formatted(id, before, after);
     }
 
