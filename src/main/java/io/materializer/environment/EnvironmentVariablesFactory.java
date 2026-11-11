@@ -16,7 +16,7 @@ public final class EnvironmentVariablesFactory {
         EnvironmentVariables environmentVariables = new EnvironmentVariables(
                 extractString(environment, "GITHUB_TOKEN"),
                 extractString(environment, "MATERIALIZER_REGISTRY_REPOSITORY"),
-                extractString(environment, "PIPELINE_STRUCTURE_STORE_REPOSITORY")
+                extractString(environment, "LIVE_PIPELINE_INPUTS_STORE_REPOSITORY")
         );
 
         try {

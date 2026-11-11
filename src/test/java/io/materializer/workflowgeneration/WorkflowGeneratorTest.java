@@ -3,11 +3,11 @@ package io.materializer.workflowgeneration;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.materializer.shared.PipelineDeclarationFetcher;
+import io.materializer.shared.LivePipelineDeclarationFetcher;
 import io.materializer.shared.models.DeclaredPipelineInput;
 import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.PipelineDeclaration;
-import io.materializer.shared.models.PipelineStructure;
+import io.materializer.shared.models.LivePipelineDeclaration;
+import io.materializer.shared.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.ResourceUtility;
 import io.materializer.shared.utilities.YamlMapperUtility;
@@ -22,7 +22,7 @@ class WorkflowGeneratorTest {
 
     @Test
     void generatesTheExpectedWorkflowYaml() throws JsonProcessingException {
-        PipelineDeclarationFetcher fetcher = mock(PipelineDeclarationFetcher.class);
+        LivePipelineDeclarationFetcher fetcher = mock(LivePipelineDeclarationFetcher.class);
         WorkflowGenerator generator = new WorkflowGenerator(fetcher, new BuildJobGenerator());
         RepositorySnapshot materializer = new RepositorySnapshot("owner/mat", "main", "a".repeat(40), 1);
         List<String> platforms = List.of("aarch64-linux", "x86_64-linux");
@@ -37,25 +37,27 @@ class WorkflowGeneratorTest {
                 new RepositorySnapshot("nader-najjar/pure-javascript", "main", javascriptSHA, 2)
         );
         DeclaredPipelineStep step = new DeclaredPipelineStep("Build", "build");
-        when(fetcher.fetch(materializer)).thenReturn(new PipelineDeclaration(repositories, List.of(step)));
+        LivePipelineDeclaration declaration = new LivePipelineDeclaration(repositories, List.of(step));
+        when(fetcher.fetchAndValidate(materializer)).thenReturn(declaration);
 
-        String yaml = generator.generate(new PipelineStructure(materializer, sources, false));
+        String yaml = generator.generate(new LivePipelineInputs(materializer, sources));
         String expected = ResourceUtility.readString("/workflowgeneration/materialize.yml");
         assertEquals(YamlMapperUtility.MAPPER.readTree(expected), YamlMapperUtility.MAPPER.readTree(yaml));
     }
 
     @Test
     void rejectsUnsupportedOperations() {
-        PipelineDeclarationFetcher fetcher = mock(PipelineDeclarationFetcher.class);
+        LivePipelineDeclarationFetcher fetcher = mock(LivePipelineDeclarationFetcher.class);
         WorkflowGenerator generator = new WorkflowGenerator(fetcher, new BuildJobGenerator());
         RepositorySnapshot materializer = new RepositorySnapshot("owner/mat", "main", "a".repeat(40), 1);
-        PipelineStructure structure = new PipelineStructure(materializer, List.of(), false);
+        LivePipelineInputs inputs = new LivePipelineInputs(materializer, List.of());
         DeclaredPipelineStep build = new DeclaredPipelineStep("Compile Libraries", "build");
         DeclaredPipelineStep unknown = new DeclaredPipelineStep("build", "unknown");
-        when(fetcher.fetch(materializer)).thenReturn(new PipelineDeclaration(List.of(), List.of(build, unknown)));
+        LivePipelineDeclaration declaration = new LivePipelineDeclaration(List.of(), List.of(build, unknown));
+        when(fetcher.fetchAndValidate(materializer)).thenReturn(declaration);
 
         assertEquals("Unsupported pipeline operation: unknown",
-                assertThrows(IllegalArgumentException.class, () -> generator.generate(structure)).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> generator.generate(inputs)).getMessage());
     }
 
 }

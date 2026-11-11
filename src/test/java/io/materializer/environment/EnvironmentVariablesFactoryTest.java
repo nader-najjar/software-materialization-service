@@ -20,12 +20,12 @@ class EnvironmentVariablesFactoryTest {
         EnvironmentVariables environment = EnvironmentVariablesFactory.from(Map.of(
                 "GITHUB_TOKEN", "example-token",
                 "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
-                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "owner/storage"
+                "LIVE_PIPELINE_INPUTS_STORE_REPOSITORY", "owner/inputs"
         ));
 
         assertEquals("example-token", environment.githubToken());
         assertEquals("owner/registry", environment.materializerRegistryRepository());
-        assertEquals("owner/storage", environment.pipelineStructureStoreRepository());
+        assertEquals("owner/inputs", environment.livePipelineInputsStoreRepository());
         assertFalse(environment.toString().contains("example-token"));
     }
 
@@ -34,7 +34,7 @@ class EnvironmentVariablesFactoryTest {
         Map<String, String> environment = Map.of(
                 "GITHUB_TOKEN", "example-token",
                 "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
-                "PIPELINE_STRUCTURE_STORE_REPOSITORY", "invalid"
+                "LIVE_PIPELINE_INPUTS_STORE_REPOSITORY", "invalid"
         );
 
         assertThrows(EnvironmentVariableException.class, () -> EnvironmentVariablesFactory.from(environment));
