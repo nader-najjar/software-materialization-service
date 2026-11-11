@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record JobStep(
         String name,
 
+        String id,
+
         @JsonProperty("if")
         String condition,
 

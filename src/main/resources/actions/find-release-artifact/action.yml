@@ -1,0 +1,31 @@
+name: Find Release Artifact
+description: Find the finished asset in the source repository's release.
+inputs:
+  repository-name:
+    description: Source repository owner and name.
+    required: true
+  release-name:
+    description: Release tag and asset basename, without the .tar.gz extension.
+    required: true
+  github-token:
+    description: Token with access to the source repository.
+    required: true
+outputs:
+  found:
+    description: Whether the published release contains the finished asset.
+    value: ${{ steps.find-release-artifact.outputs.found }}
+runs:
+  using: composite
+  steps:
+    - name: Find Release Artifact
+      id: find-release-artifact
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const find = require(`${process.env.ACTION_PATH}/find.cjs`);
+          await find({github, core});
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        REPOSITORY_NAME: ${{ inputs.repository-name }}
+        RELEASE_NAME: ${{ inputs.release-name }}
