@@ -12,10 +12,11 @@ permissions:
 
 jobs:
   materialize-next:
+    name: Materialize Next
     runs-on: ubuntu-24.04
     steps:
       - name: Check Out Service
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: 195fdc5ebbf580294885e942666075bb17d0b7b5
           persist-credentials: false
@@ -28,7 +29,7 @@ jobs:
 
       - name: Create Materialization Service Token
         id: app-token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.MATERIALIZATION_APP_ID }}
           private-key: ${{ secrets.MATERIALIZATION_APP_PRIVATE_KEY }}
