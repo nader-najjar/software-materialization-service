@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.inject.Inject;
 import io.materializer.shared.models.DeclaredPipelineInput;
 import io.materializer.shared.models.DeclaredPipelineStep;
 import io.materializer.shared.models.RepositorySnapshot;
@@ -13,6 +14,9 @@ import io.materializer.workflowgeneration.models.BuildMatrixRow;
 import io.materializer.workflowgeneration.models.JobStep;
 
 public class BuildJobGenerator {
+
+    @Inject
+    public BuildJobGenerator() { }
 
     public BuildJob generate(
             DeclaredPipelineStep step,
@@ -79,7 +83,7 @@ public class BuildJobGenerator {
         return new JobStep(
                 "Check Out ${{ matrix.repositoryName }}",
                 null,
-                "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
                 null,
                 Map.of(
                         "repository", "${{ matrix.repositoryName }}",
