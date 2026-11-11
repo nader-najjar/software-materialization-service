@@ -9,9 +9,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record Workflow(
         String name,
+
+        @JsonProperty("run-name")
+        String runName,
+
         Trigger on,
+
         Concurrency concurrency,
+
         Map<String, String> permissions,
+
         Map<String, Object> jobs
 ) {
 
