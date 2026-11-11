@@ -62,7 +62,7 @@ public class WorkflowGenerator {
         Workflow.Trigger trigger = new Workflow.Trigger(push);
         Workflow.Concurrency concurrency = new Workflow.Concurrency("materialize", "single", false);
         Map<String, String> permissions = Map.of("contents", "read");
-        return new Workflow("Materialize", trigger, concurrency, permissions, jobs);
+        return new Workflow("Materialize", "Materialize", trigger, concurrency, permissions, jobs);
     }
 
     private Object generateJob(
