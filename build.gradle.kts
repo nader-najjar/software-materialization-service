@@ -66,7 +66,7 @@ dependencyLocking {
 dependencies {
     constraints {
         // Guice pulls in an older Guava that uses sun.misc.Unsafe (terminally deprecated in JDK 25). Force a newer version that migrated to VarHandle, eliminating the warning.
-        implementation("com.google.guava:guava:33.4.8-jre")
+        implementation("com.google.guava:guava:33.7.1-jre")
     }
 
     // Logging
@@ -77,7 +77,7 @@ dependencies {
     implementation("com.google.inject:guice:7.0.0")
 
     // JSON and YAML `serde`
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.7")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
 
