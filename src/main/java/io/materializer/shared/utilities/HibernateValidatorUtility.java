@@ -20,7 +20,19 @@ public final class HibernateValidatorUtility {
             throw new ValidationException("Value must not be null");
         }
 
-        Set<ConstraintViolation<T>> violations = VALIDATOR.validate(value);
+        ensureValid(VALIDATOR.validate(value));
+    }
+
+    public static <T> void validateProperties(T value, String... properties) {
+        if (value == null) {
+            throw new ValidationException("Value must not be null");
+        }
+        for (String property : properties) {
+            ensureValid(VALIDATOR.validateProperty(value, property));
+        }
+    }
+
+    private static <T> void ensureValid(Set<ConstraintViolation<T>> violations) {
         if (!violations.isEmpty()) {
             String errors = violations.stream()
                     .map(v -> v.getPropertyPath() + ": " + v.getMessage())

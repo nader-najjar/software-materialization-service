@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.execution.models.ApplicationInput;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
@@ -11,6 +12,7 @@ import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
 import io.materializer.materializerregistryfetcher.models.MaterializerRegistration;
 import io.materializer.materializerregistryfetcher.models.MaterializerRegistry;
 import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.shared.utilities.HibernateValidatorUtility;
 import io.materializer.shared.utilities.JsonSanitizer;
 import io.materializer.workflowgeneration.WorkflowGenerator;
 import io.materializer.workflowpublishing.WorkflowPublisher;
@@ -26,6 +28,7 @@ public class Executor {
     private final LivePipelineInputsReconciler livePipelineInputsReconciler;
     private final WorkflowGenerator workflowGenerator;
     private final WorkflowPublisher workflowPublisher;
+    private final EnvironmentVariables environmentVariables;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Guice manages the shared workflow publisher")
     @Inject
@@ -34,13 +37,15 @@ public class Executor {
             LivePipelineInputsAdvancer livePipelineInputsAdvancer,
             LivePipelineInputsReconciler livePipelineInputsReconciler,
             WorkflowGenerator workflowGenerator,
-            WorkflowPublisher workflowPublisher
+            WorkflowPublisher workflowPublisher,
+            EnvironmentVariables environmentVariables
     ) {
         this.materializerRegistryFetcher = materializerRegistryFetcher;
         this.livePipelineInputsAdvancer = livePipelineInputsAdvancer;
         this.livePipelineInputsReconciler = livePipelineInputsReconciler;
         this.workflowGenerator = workflowGenerator;
         this.workflowPublisher = workflowPublisher;
+        this.environmentVariables = environmentVariables;
     }
 
     public void execute(String[] args) {
@@ -56,6 +61,10 @@ public class Executor {
     }
 
     private void materializeNext() {
+        HibernateValidatorUtility.validateProperties(
+                environmentVariables,
+                "materializerRegistryRepository", "livePipelineInputsStoreRepository"
+        );
         MaterializerRegistry materializerRegistry = materializerRegistryFetcher.fetch();
         for (MaterializerRegistration registration : materializerRegistry.registrations()) {
             materializeNextRegistrationUpdate(registration);
