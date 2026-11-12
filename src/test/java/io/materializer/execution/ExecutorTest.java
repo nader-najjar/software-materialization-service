@@ -1,8 +1,11 @@
 package io.materializer.execution;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
 import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
@@ -10,8 +13,10 @@ import io.materializer.materializerregistryfetcher.models.MaterializerRegistrati
 import io.materializer.materializerregistryfetcher.models.MaterializerRegistry;
 import io.materializer.shared.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
+import io.materializer.shared.utilities.JsonMapperUtility;
 import io.materializer.workflowgeneration.WorkflowGenerator;
 import io.materializer.workflowpublishing.WorkflowPublisher;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -31,8 +36,39 @@ class ExecutorTest {
     private final LivePipelineInputsReconciler reconciler = mock(LivePipelineInputsReconciler.class);
     private final WorkflowGenerator generator = mock(WorkflowGenerator.class);
     private final WorkflowPublisher publisher = mock(WorkflowPublisher.class);
-    private final Executor executor = new Executor(registryFetcher, advancer, reconciler, generator, publisher);
+    private final Executor executor = new Executor(
+            registryFetcher, advancer, reconciler, generator, publisher,
+            new EnvironmentVariables("token", "owner/registry", "owner/inputs")
+    );
     private final MaterializerRegistration registration = new MaterializerRegistration("owner/materializer");
+
+    @ParameterizedTest
+    @ValueSource(strings = {"MATERIALIZER_REGISTRY_REPOSITORY", "LIVE_PIPELINE_INPUTS_STORE_REPOSITORY"})
+    void rejectsMissingMaterializationConfigurationBeforeProcessing(String missing) {
+        Map<String, String> environment = new HashMap<>(Map.of(
+                "GITHUB_TOKEN", "token", "MATERIALIZER_REGISTRY_REPOSITORY", "owner/registry",
+                "LIVE_PIPELINE_INPUTS_STORE_REPOSITORY", "owner/inputs"
+        ));
+        environment.remove(missing);
+        Executor incomplete = new Executor(
+                registryFetcher, advancer, reconciler, generator, publisher,
+                JsonMapperUtility.MAPPER.convertValue(environment, EnvironmentVariables.class)
+        );
+        assertThrows(ValidationException.class,
+                () -> incomplete.execute(new String[] {"{\"operation\":\"materialize-next\"}"}));
+        verifyNoInteractions(registryFetcher, advancer, reconciler, generator, publisher);
+    }
+
+    @Test
+    void rejectsInvalidStorageRepositoryBeforeProcessing() {
+        Executor invalid = new Executor(
+                registryFetcher, advancer, reconciler, generator, publisher,
+                new EnvironmentVariables("token", "owner/registry", "invalid")
+        );
+        assertThrows(ValidationException.class,
+                () -> invalid.execute(new String[] {"{\"operation\":\"materialize-next\"}"}));
+        verifyNoInteractions(registryFetcher, advancer, reconciler, generator, publisher);
+    }
 
     @Test
     void doesNothingForAnEmptyRegistry() {

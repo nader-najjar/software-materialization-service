@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
 import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
@@ -60,7 +61,8 @@ class ExecutorWorkflowTest {
             livePipelineInputsAdvancer,
             livePipelineInputsReconciler,
             new WorkflowGenerator(fetcher, new BuildJobGenerator()),
-            new WorkflowPublisher(gitHub)
+            new WorkflowPublisher(gitHub),
+            new EnvironmentVariables("token", "owner/registry", "owner/inputs")
     );
 
     @Test
