@@ -1,0 +1,30 @@
+name: Publish Release Artifact
+description: Publish the built package in a release tagged at its source commit.
+inputs:
+  repository-name:
+    description: Source repository owner and name.
+    required: true
+  commit-sha:
+    description: Source commit to tag.
+    required: true
+  release-name:
+    description: Release tag and asset basename, without the .tar.gz extension.
+    required: true
+  github-token:
+    description: Token with release publishing access to the source repository.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Publish Release Artifact
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const publish = require(`${process.env.ACTION_PATH}/publish.cjs`);
+          await publish({github});
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        REPOSITORY_NAME: ${{ inputs.repository-name }}
+        COMMIT_SHA: ${{ inputs.commit-sha }}
+        RELEASE_NAME: ${{ inputs.release-name }}

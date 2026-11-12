@@ -60,7 +60,11 @@ public final class WorkflowPublisher {
         List<String> resourcePaths = List.of(
                 "actions/reject-manual-retries/action.yml",
                 "actions/reject-manual-retries/check.sh",
-                "actions/universal-build/action.yml"
+                "actions/universal-build/action.yml",
+                "actions/find-release-artifact/action.yml",
+                "actions/find-release-artifact/find.cjs",
+                "actions/publish-release-artifact/action.yml",
+                "actions/publish-release-artifact/publish.cjs"
         );
 
         for (String resourcePath : resourcePaths) {

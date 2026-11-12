@@ -48,31 +48,55 @@ jobs:
 
       - name: Reject Unsupported Build Systems
         if: matrix.buildSystem != 'universal'
-        run: |
-          echo "::error::Unsupported build system: $BUILD_SYSTEM"
-          exit 1
+        run: 'echo "::error::Unsupported build system: $BUILD_SYSTEM"; exit 1'
         env:
           BUILD_SYSTEM: ${{ matrix.buildSystem }}
 
+      - name: Set Release Name
+        run: repo='${{ matrix.repositoryName }}'; echo "RELEASE_NAME=${repo/\//@}-${{ matrix.platform }}-${{ matrix.commitSHA }}" >> "$GITHUB_ENV"
+
+      - name: Set Repository Owner
+        run: echo "REPOSITORY_OWNER=${REPOSITORY_NAME%%/*}" >> "$GITHUB_ENV"
+        env:
+          REPOSITORY_NAME: ${{ matrix.repositoryName }}
+
+      - name: Create Repository Token
+        id: create-repository-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
+          owner: ${{ env.REPOSITORY_OWNER }}
+          repositories: ${{ matrix.repositoryName }}
+          permission-contents: write
+          permission-workflows: write
+
+      - name: Find Release Artifact
+        id: find-release-artifact
+        uses: $/.github/actions/find-release-artifact
+        with:
+          repository-name: ${{ matrix.repositoryName }}
+          release-name: ${{ env.RELEASE_NAME }}
+          github-token: ${{ steps.create-repository-token.outputs.token }}
+
       - name: Check Out ${{ matrix.repositoryName }}
+        if: steps.find-release-artifact.outputs.found != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ matrix.repositoryName }}
           ref: ${{ matrix.commitSHA }}
           persist-credentials: "false"
+          token: ${{ steps.create-repository-token.outputs.token }}
 
       - name: Build ${{ matrix.repositoryName }}
-        if: matrix.buildSystem == 'universal'
+        if: steps.find-release-artifact.outputs.found != 'true' && matrix.buildSystem == 'universal'
         uses: $/.github/actions/universal-build
 
-      - name: Set Artifact Repository Name
-        run: echo "ARTIFACT_REPOSITORY=${REPOSITORY_NAME/\//@}" >> "$GITHUB_ENV"
-        env:
-          REPOSITORY_NAME: ${{ matrix.repositoryName }}
-
-      - name: Upload Release Artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Publish Release Artifact
+        if: steps.find-release-artifact.outputs.found != 'true'
+        uses: $/.github/actions/publish-release-artifact
         with:
-          name: ${{ env.ARTIFACT_REPOSITORY }}-${{ matrix.platform }}-${{ matrix.commitSHA }}
-          path: build/release-artifact.tar.gz
-          if-no-files-found: error
+          repository-name: ${{ matrix.repositoryName }}
+          commit-sha: ${{ matrix.commitSHA }}
+          release-name: ${{ env.RELEASE_NAME }}
+          github-token: ${{ steps.create-repository-token.outputs.token }}

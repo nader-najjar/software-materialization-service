@@ -1,0 +1,91 @@
+name: Materialize
+run-name: Materialize
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: materialize
+  queue: single
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  step_1:
+    name: Build ${{ matrix.repositoryName }} (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repositoryName: nader-najjar/software-materialization-service
+            commitSHA: e980cbbcd2e2a23709b3f8e2037b985ad32f8a18
+            buildSystem: universal
+            platform: aarch64-linux
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check Out ${{ matrix.repositoryName }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ matrix.repositoryName }}
+          ref: ${{ matrix.commitSHA }}
+          persist-credentials: false
+
+      - name: Reject Manual Retries
+        uses: ./src/main/resources/actions/reject-manual-retries
+
+      - name: Reject Unsupported Build Systems
+        if: matrix.buildSystem != 'universal'
+        run: 'echo "::error::Unsupported build system: $BUILD_SYSTEM"; exit 1'
+        env:
+          BUILD_SYSTEM: ${{ matrix.buildSystem }}
+
+      - name: Set Release Name
+        run: repo='${{ matrix.repositoryName }}'; echo "RELEASE_NAME=${repo/\//@}-${{ matrix.platform }}-${{ matrix.commitSHA }}" >> "$GITHUB_ENV"
+
+      - name: Set Repository Owner
+        run: echo "REPOSITORY_OWNER=${REPOSITORY_NAME%%/*}" >> "$GITHUB_ENV"
+        env:
+          REPOSITORY_NAME: ${{ matrix.repositoryName }}
+
+      - name: Create Repository Token
+        id: create-repository-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
+          owner: ${{ env.REPOSITORY_OWNER }}
+          repositories: ${{ matrix.repositoryName }}
+          permission-contents: write
+          permission-workflows: write
+
+      - name: Find Release Artifact
+        id: find-release-artifact
+        uses: ./src/main/resources/actions/find-release-artifact
+        with:
+          repository-name: ${{ matrix.repositoryName }}
+          release-name: ${{ env.RELEASE_NAME }}
+          github-token: ${{ steps.create-repository-token.outputs.token }}
+
+      - name: Build ${{ matrix.repositoryName }}
+        if: steps.find-release-artifact.outputs.found != 'true' && matrix.buildSystem == 'universal'
+        uses: ./src/main/resources/actions/universal-build
+
+      - name: Publish Release Artifact
+        if: steps.find-release-artifact.outputs.found != 'true'
+        uses: ./src/main/resources/actions/publish-release-artifact
+        with:
+          repository-name: ${{ matrix.repositoryName }}
+          commit-sha: ${{ matrix.commitSHA }}
+          release-name: ${{ env.RELEASE_NAME }}
+          github-token: ${{ steps.create-repository-token.outputs.token }}
+
+  step_2:
+    name: Deploy Service
+    needs: step_1
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Deploy Service
+        run: echo "TODO - deploy the service release to the scheduled runner."

@@ -80,7 +80,7 @@ class ExecutorWorkflowTest {
         JsonNode row = job.path("strategy").path("matrix").path("include").get(0);
         assertEquals("owner/source", row.path("repositoryName").asText());
         assertEquals("b".repeat(40), row.path("commitSHA").asText());
-        assertEquals(6, job.path("steps").size());
+        assertEquals(9, job.path("steps").size());
     }
 
     @Test

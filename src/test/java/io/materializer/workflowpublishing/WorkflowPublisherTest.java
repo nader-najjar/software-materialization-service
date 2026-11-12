@@ -1,6 +1,7 @@
 package io.materializer.workflowpublishing;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import io.materializer.shared.utilities.ResourceUtility;
@@ -63,21 +64,18 @@ class WorkflowPublisherTest {
     }
 
     private void verifyActionResources() throws IOException {
-        verify(treeBuilder).add(
-                ".github/actions/reject-manual-retries/action.yml",
-                ResourceUtility.readString("/actions/reject-manual-retries/action.yml"),
-                false
+        List<String> paths = List.of(
+                "actions/reject-manual-retries/action.yml",
+                "actions/reject-manual-retries/check.sh",
+                "actions/universal-build/action.yml",
+                "actions/find-release-artifact/action.yml",
+                "actions/find-release-artifact/find.cjs",
+                "actions/publish-release-artifact/action.yml",
+                "actions/publish-release-artifact/publish.cjs"
         );
-        verify(treeBuilder).add(
-                ".github/actions/reject-manual-retries/check.sh",
-                ResourceUtility.readString("/actions/reject-manual-retries/check.sh"),
-                false
-        );
-        verify(treeBuilder).add(
-                ".github/actions/universal-build/action.yml",
-                ResourceUtility.readString("/actions/universal-build/action.yml"),
-                false
-        );
+        for (String path : paths) {
+            verify(treeBuilder).add(".github/" + path, ResourceUtility.readString("/" + path), false);
+        }
         verify(treeBuilder).create();
     }
 
