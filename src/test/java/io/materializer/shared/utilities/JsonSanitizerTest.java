@@ -36,17 +36,26 @@ class JsonSanitizerTest {
     @ParameterizedTest
     @ValueSource(strings = {
         "{",
-        "{}",
         "[]",
         "{\"operation\":\"materialize-next\",\"operation\":\"other\"}"
     })
-    void rejectsMalformedMissingAndDuplicateJSON(String json) {
+    void rejectsMalformedAndDuplicateJSON(String json) {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> JsonSanitizer.parseAndValidate(json, ApplicationInput.class)
         );
 
         assertInstanceOf(JsonProcessingException.class, exception.getCause());
+    }
+
+    @Test
+    void rejectsMissingOperationThroughSharedValidation() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> JsonSanitizer.parseAndValidate("{}", ApplicationInput.class)
+        );
+
+        assertInstanceOf(ValidationException.class, exception.getCause());
     }
 
     @Test

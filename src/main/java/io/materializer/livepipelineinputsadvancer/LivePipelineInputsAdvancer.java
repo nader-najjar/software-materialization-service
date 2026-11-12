@@ -1,5 +1,6 @@
 package io.materializer.livepipelineinputsadvancer;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -72,7 +73,7 @@ public class LivePipelineInputsAdvancer {
         }
 
         Comparator<RepositoryPush> pushOrder = Comparator
-                .comparing(RepositoryPush::pushedAt)
+                .comparing((RepositoryPush push) -> Instant.parse(push.pushedAt()))
                 .thenComparingLong(RepositoryPush::pushID);
 
         return candidates.stream()

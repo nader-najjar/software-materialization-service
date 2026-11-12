@@ -31,8 +31,8 @@ class BuildJobGeneratorTest {
                 "universal",
                 List.of("aarch64-linux", "x86_64-linux")
         );
-        RepositorySnapshot main = new RepositorySnapshot("owner/source", "main", "a".repeat(40), 1);
-        RepositorySnapshot release = new RepositorySnapshot("OWNER/source", "release", "b".repeat(40), 2);
+        RepositorySnapshot main = new RepositorySnapshot("owner/source", "main", "a".repeat(40), 1L);
+        RepositorySnapshot release = new RepositorySnapshot("OWNER/source", "release", "b".repeat(40), 2L);
 
         List<BuildMatrixRow> rows = BuildJobGenerator.generateBuildMatrixRows(
                 List.of(repository),
@@ -55,8 +55,8 @@ class BuildJobGeneratorTest {
         );
         String commitSHA = "a".repeat(40);
         List<RepositorySnapshot> snapshots = List.of(
-                new RepositorySnapshot("owner/source", "main", commitSHA, 1),
-                new RepositorySnapshot("owner/source", "release", commitSHA, 2)
+                new RepositorySnapshot("owner/source", "main", commitSHA, 1L),
+                new RepositorySnapshot("owner/source", "release", commitSHA, 2L)
         );
 
         assertEquals(List.of(
@@ -68,7 +68,7 @@ class BuildJobGeneratorTest {
     @Test
     void rejectsMissingPinsAndUnsupportedPlatforms() {
         DeclaredPipelineInput input = new DeclaredPipelineInput("owner/source", "main", "universal", List.of("other"));
-        RepositorySnapshot snapshot = new RepositorySnapshot("owner/source", "main", "a".repeat(40), 1);
+        RepositorySnapshot snapshot = new RepositorySnapshot("owner/source", "main", "a".repeat(40), 1L);
         assertThrows(
                 IllegalStateException.class,
                 () -> BuildJobGenerator.generateBuildMatrixRows(List.of(input), List.of())

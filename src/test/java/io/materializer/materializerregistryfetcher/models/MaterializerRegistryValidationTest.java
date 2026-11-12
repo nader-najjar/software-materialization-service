@@ -42,9 +42,9 @@ class MaterializerRegistryValidationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "{", "[]", "{}", "{\"registrations\":[]} {}", "{\"registrations\":[],\"registrations\":[]}"
+        "{", "[]", "{\"registrations\":[]} {}", "{\"registrations\":[],\"registrations\":[]}"
     })
-    void rejectsMalformedMissingDuplicateAndTrailingJSON(String json) {
+    void rejectsMalformedDuplicateAndTrailingJSON(String json) {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> JsonSanitizer.parseAndValidate(json, MaterializerRegistry.class)
@@ -56,6 +56,8 @@ class MaterializerRegistryValidationTest {
     @ParameterizedTest
     @ValueSource(strings = {
         "null",
+        "{}",
+        "{\"registrations\":[{}]}",
         "{\"registrations\":null}",
         "{\"registrations\":[null]}",
         "{\"registrations\":[{\"repositoryName\":null}]}",

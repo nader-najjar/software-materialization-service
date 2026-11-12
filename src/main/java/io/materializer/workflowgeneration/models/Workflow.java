@@ -37,7 +37,7 @@ public record Workflow(
             String queue,
 
             @JsonProperty("cancel-in-progress")
-            boolean cancelInProgress
+            Boolean cancelInProgress
     ) { }
 
     public record Push(
