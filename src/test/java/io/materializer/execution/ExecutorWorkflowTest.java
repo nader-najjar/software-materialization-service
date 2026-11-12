@@ -52,8 +52,8 @@ class ExecutorWorkflowTest {
     private final GHTreeBuilder treeBuilder = mock(GHTreeBuilder.class, RETURNS_SELF);
     private final GHCommitBuilder commitBuilder = mock(GHCommitBuilder.class, RETURNS_SELF);
     private final LivePipelineInputs reconciledInputs = new LivePipelineInputs(
-            new RepositorySnapshot("owner/materializer", "main", "a".repeat(40), 1),
-            List.of(new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2))
+            new RepositorySnapshot("owner/materializer", "main", "a".repeat(40), 1L),
+            List.of(new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2L))
     );
     private final Executor executor = new Executor(
             registryFetcher,

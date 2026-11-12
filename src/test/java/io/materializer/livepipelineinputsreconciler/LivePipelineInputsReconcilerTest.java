@@ -38,7 +38,7 @@ class LivePipelineInputsReconcilerTest {
             "owner/materializer",
             "main",
             "a".repeat(40),
-            42
+            42L
     );
     private final LivePipelineInputs inputs = new LivePipelineInputs(materializerSnapshot, List.of());
 
@@ -50,7 +50,7 @@ class LivePipelineInputsReconcilerTest {
         );
         when(livePipelineDeclarationFetcher.fetchAndValidate(materializerSnapshot)).thenReturn(declaration);
 
-        RepositorySnapshot newSnapshot = new RepositorySnapshot("owner/new", "main", "b".repeat(40), 43);
+        RepositorySnapshot newSnapshot = new RepositorySnapshot("owner/new", "main", "b".repeat(40), 43L);
         when(repositoryPushHistory.latest("owner/new", "main")).thenReturn(newSnapshot);
 
         LivePipelineInputs result = reconciler.reconcile(inputs);
@@ -80,15 +80,15 @@ class LivePipelineInputsReconcilerTest {
 
     @Test
     void retainsMatchingPinsAndFetchesOnlyNewRepositoryBranches() {
-        RepositorySnapshot first = new RepositorySnapshot("owner/first", "main", "b".repeat(40), 10);
-        RepositorySnapshot second = new RepositorySnapshot("owner/second", "release", "c".repeat(40), 11);
-        RepositorySnapshot removed = new RepositorySnapshot("owner/removed", "main", "d".repeat(40), 12);
+        RepositorySnapshot first = new RepositorySnapshot("owner/first", "main", "b".repeat(40), 10L);
+        RepositorySnapshot second = new RepositorySnapshot("owner/second", "release", "c".repeat(40), 11L);
+        RepositorySnapshot removed = new RepositorySnapshot("owner/removed", "main", "d".repeat(40), 12L);
         prepareChangedDeclaration();
         List<RepositorySnapshot> previousSnapshots = List.of(first, second, removed);
         LivePipelineInputs previousInputs = new LivePipelineInputs(materializerSnapshot, previousSnapshots);
 
-        RepositorySnapshot newBranch = new RepositorySnapshot("owner/first", "Main", "e".repeat(40), 13);
-        RepositorySnapshot newRepository = new RepositorySnapshot("owner/new", "main", "f".repeat(40), 14);
+        RepositorySnapshot newBranch = new RepositorySnapshot("owner/first", "Main", "e".repeat(40), 13L);
+        RepositorySnapshot newRepository = new RepositorySnapshot("owner/new", "main", "f".repeat(40), 14L);
         when(repositoryPushHistory.latest("owner/first", "Main")).thenReturn(newBranch);
         when(repositoryPushHistory.latest("owner/new", "main")).thenReturn(newRepository);
 
@@ -107,7 +107,7 @@ class LivePipelineInputsReconcilerTest {
 
     @Test
     void doesNotSaveInvalidReconciledInputs() {
-        RepositorySnapshot invalidSnapshot = new RepositorySnapshot("owner/new", "main", "invalid", 43);
+        RepositorySnapshot invalidSnapshot = new RepositorySnapshot("owner/new", "main", "invalid", 43L);
         prepareNewRepository(invalidSnapshot);
 
         assertThrows(ValidationException.class, () -> reconciler.reconcile(inputs));
@@ -117,7 +117,7 @@ class LivePipelineInputsReconcilerTest {
 
     @Test
     void propagatesSaveFailures() {
-        RepositorySnapshot snapshot = new RepositorySnapshot("owner/new", "main", "b".repeat(40), 43);
+        RepositorySnapshot snapshot = new RepositorySnapshot("owner/new", "main", "b".repeat(40), 43L);
         prepareNewRepository(snapshot);
         LivePipelineInputs expected = new LivePipelineInputs(materializerSnapshot, List.of(snapshot));
         IllegalStateException failure = new IllegalStateException("Could not save inputs");

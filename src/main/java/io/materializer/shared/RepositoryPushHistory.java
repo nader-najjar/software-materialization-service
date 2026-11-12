@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -116,7 +117,7 @@ public class RepositoryPushHistory {
             if (!pushes.isEmpty() && !pushes.getLast().before().equals(push.after())) {
                 throw new IllegalStateException("Incomplete push history for " + baseSnapshot.repositoryName());
             }
-            if (push.pushID() == baseSnapshot.pushID()) {
+            if (push.pushID().equals(baseSnapshot.pushID())) {
                 verifyCheckpoint(push, baseSnapshot);
                 return true;
             }
@@ -134,6 +135,7 @@ public class RepositoryPushHistory {
         RepositoryPush[] pushes = JsonSanitizer.parseAndValidate(response.body(), RepositoryPush[].class);
         for (RepositoryPush push : pushes) {
             HibernateValidatorUtility.validate(push);
+            Instant.parse(push.pushedAt());
         }
         Matcher next = NEXT_PAGE.matcher(String.join(",", response.headers().allValues("Link")));
         return new Page(List.of(pushes), next.find() ? URI.create(next.group(1)) : null);

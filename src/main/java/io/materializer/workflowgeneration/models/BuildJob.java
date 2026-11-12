@@ -21,7 +21,7 @@ public record BuildJob(
 
     public record Strategy(
             @JsonProperty("fail-fast")
-            boolean failFast,
+            Boolean failFast,
 
             Matrix matrix
     ) { }

@@ -5,7 +5,7 @@ import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
-import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +53,7 @@ class RepositoryPushHistoryTest {
                 49784801818L,
                 "d229185fce08f9fefd8c3ae17c1b421eaeb37f67",
                 "744fb8afe3e7d97de93bf982efad2db10fef9133",
-                Instant.parse("2026-11-10T23:39:46Z")
+                "2026-11-10T23:39:46Z"
         );
         assertEquals(List.of(expected), List.of(pushes));
     }
@@ -78,7 +78,7 @@ class RepositoryPushHistoryTest {
         when(repository.getDefaultBranch()).thenReturn("trunk");
         doReturn(page(push(10, B, A), Map.of())).when(httpClient).send(any(), any());
 
-        assertEquals(new RepositorySnapshot(REPO, "trunk", A, 10), repositoryPushHistory.latestOnDefaultBranch(REPO));
+        assertEquals(new RepositorySnapshot(REPO, "trunk", A, 10L), repositoryPushHistory.latestOnDefaultBranch(REPO));
     }
 
     @Test
@@ -88,7 +88,7 @@ class RepositoryPushHistoryTest {
         HttpResponse<?> second = page(push(11, A, B) + "," + push(10, B, A), Map.of());
         doReturn(first, second).when(httpClient).send(any(), any());
 
-        List<RepositoryPush> pushes = repositoryPushHistory.since(new RepositorySnapshot(REPO, "main", A, 10));
+        List<RepositoryPush> pushes = repositoryPushHistory.since(new RepositorySnapshot(REPO, "main", A, 10L));
 
         assertEquals(List.of(11L, 12L), pushes.stream().map(RepositoryPush::pushID).toList());
     }
@@ -97,7 +97,7 @@ class RepositoryPushHistoryTest {
     void rejectsMissingCheckpoints() throws IOException, InterruptedException {
         doReturn(page(push(12, B, A), Map.of())).when(httpClient).send(any(), any());
 
-        RepositorySnapshot baseSnapshot = new RepositorySnapshot(REPO, "main", A, 10);
+        RepositorySnapshot baseSnapshot = new RepositorySnapshot(REPO, "main", A, 10L);
         assertThrows(IllegalStateException.class, () -> repositoryPushHistory.since(baseSnapshot));
     }
 
@@ -120,6 +120,23 @@ class RepositoryPushHistoryTest {
     }
 
     @Test
+    void matchesCheckpointIDsOutsideTheBoxedValueCache() throws IOException, InterruptedException {
+        doReturn(page(push(1000, B, A), Map.of())).when(httpClient).send(any(), any());
+
+        RepositorySnapshot snapshot = new RepositorySnapshot(REPO, "main", A, 1000L);
+        assertTrue(repositoryPushHistory.since(snapshot).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "not-a-time", "2026-02-30T01:00:00Z"})
+    void rejectsMalformedTimestampsBeforePlanning(String timestamp) throws IOException, InterruptedException {
+        String json = push(10, A, B).replace("2026-11-07T01:00:00Z", timestamp);
+        doReturn(page(json, Map.of())).when(httpClient).send(any(), any());
+
+        assertThrows(DateTimeParseException.class, () -> repositoryPushHistory.latest(REPO, "main"));
+    }
+
+    @Test
     void rejectsNullPushEntries() throws IOException, InterruptedException {
         doReturn(page("null", Map.of())).when(httpClient).send(any(), any());
 
@@ -130,7 +147,7 @@ class RepositoryPushHistoryTest {
     void acceptsZeroBeforeSHAForBranchCreation() throws IOException, InterruptedException {
         doReturn(page(push(10, "0".repeat(40), A), Map.of())).when(httpClient).send(any(), any());
 
-        assertEquals(new RepositorySnapshot(REPO, "main", A, 10), repositoryPushHistory.latest(REPO, "main"));
+        assertEquals(new RepositorySnapshot(REPO, "main", A, 10L), repositoryPushHistory.latest(REPO, "main"));
     }
 
     private String push(long id, String before, String after) {

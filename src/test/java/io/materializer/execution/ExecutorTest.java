@@ -114,7 +114,7 @@ class ExecutorTest {
 
     private LivePipelineInputs prepareSuccessfulRegistration(MaterializerRegistration materializerRegistration) {
         LivePipelineInputs advanced = inputs(materializerRegistration.repositoryName());
-        RepositorySnapshot source = new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2);
+        RepositorySnapshot source = new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2L);
         RepositorySnapshot materializerSnapshot = advanced.materializerRepositorySnapshot();
         LivePipelineInputs reconciled = new LivePipelineInputs(materializerSnapshot, List.of(source));
         when(advancer.advance(materializerRegistration.repositoryName())).thenReturn(Optional.of(advanced));
@@ -139,7 +139,7 @@ class ExecutorTest {
     }
 
     private LivePipelineInputs inputs(String repositoryName) {
-        RepositorySnapshot snapshot = new RepositorySnapshot(repositoryName, "main", "a".repeat(40), 1);
+        RepositorySnapshot snapshot = new RepositorySnapshot(repositoryName, "main", "a".repeat(40), 1L);
         return new LivePipelineInputs(snapshot, List.of());
     }
 }

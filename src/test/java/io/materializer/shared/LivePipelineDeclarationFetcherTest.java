@@ -28,7 +28,7 @@ class LivePipelineDeclarationFetcherTest {
             "owner/materializer",
             "main",
             "a".repeat(40),
-            42
+            42L
     );
 
     @Test

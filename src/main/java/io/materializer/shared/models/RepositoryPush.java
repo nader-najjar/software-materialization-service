@@ -1,7 +1,5 @@
 package io.materializer.shared.models;
 
-import java.time.Instant;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -10,8 +8,9 @@ import jakarta.validation.constraints.Positive;
 public record RepositoryPush(
 
         @JsonProperty("id")
+        @NotNull
         @Positive
-        long pushID,
+        Long pushID,
 
         @JsonProperty("before")
         @NotNull
@@ -25,7 +24,7 @@ public record RepositoryPush(
 
         @JsonProperty("timestamp")
         @NotNull
-        Instant pushedAt
+        String pushedAt
 
 ) {
     public boolean deletesBranch() {

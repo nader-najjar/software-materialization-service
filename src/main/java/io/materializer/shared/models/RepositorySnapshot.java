@@ -23,7 +23,8 @@ public record RepositorySnapshot(
         String commitSHA,
 
         @JsonProperty("pushID")
+        @NotNull
         @Positive
-        long pushID
+        Long pushID
 
 ) { }
