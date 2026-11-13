@@ -1,0 +1,61 @@
+name: Register
+run-name: Register ${{ inputs.materializerRepositoryToRegister }}
+
+env:
+  ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
+  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-131f780a663a54f7cf36bbeac66891757c9ab340
+  MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
+
+on:
+  workflow_dispatch:
+    inputs:
+      materializerRepositoryToRegister:
+        description: Materializer repository to register (owner/name).
+        required: true
+        type: string
+
+concurrency:
+  group: register
+  queue: single
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    name: Register Materializer
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Download Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$ALGORITHM_RELEASE" \
+            --repo "$ALGORITHM_REPOSITORY" \
+            --pattern "$ALGORITHM_RELEASE.tar.gz" \
+            --dir "$RUNNER_TEMP"
+          mkdir -p ./custom-software
+          tar -xzf "$RUNNER_TEMP/$ALGORITHM_RELEASE.tar.gz" -C ./custom-software
+
+      - name: Link Runtime
+        run: sudo ln -sT "$GITHUB_WORKSPACE/custom-software/runtime-artifacts/nix" /nix
+
+      - name: Create Materialization Service Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.MATERIALIZATION_APP_CLIENT_ID }}
+          private-key: ${{ secrets.MATERIALIZATION_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ env.MATERIALIZER_REGISTRY_REPOSITORY }}
+            ${{ inputs.materializerRepositoryToRegister }}
+
+      - name: Register Materializer
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BUILD_PUBLISHER_APP_CLIENT_ID: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
+          BUILD_PUBLISHER_APP_PRIVATE_KEY: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
+          APPLICATION_INPUT: '{"operation":"register","repositoryName":${{ toJSON(inputs.materializerRepositoryToRegister) }}}'
+        run: ./custom-software/execution-script-symlink ./custom-software/idiomatic-artifacts "$APPLICATION_INPUT"
