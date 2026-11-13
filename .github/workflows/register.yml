@@ -5,6 +5,8 @@ env:
   ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
   ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-131f780a663a54f7cf36bbeac66891757c9ab340
   MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
+  BUILD_PUBLISHER_APP_CLIENT_ID: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
+  BUILD_PUBLISHER_APP_PRIVATE_KEY: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
 
 on:
   workflow_dispatch:
@@ -55,7 +57,5 @@ jobs:
       - name: Register Materializer
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          BUILD_PUBLISHER_APP_CLIENT_ID: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
-          BUILD_PUBLISHER_APP_PRIVATE_KEY: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
           APPLICATION_INPUT: '{"operation":"register","repositoryName":${{ toJSON(inputs.materializerRepositoryToRegister) }}}'
         run: ./custom-software/execution-script-symlink ./custom-software/idiomatic-artifacts "$APPLICATION_INPUT"
