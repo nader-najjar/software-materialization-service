@@ -15,7 +15,7 @@ class JsonSanitizerTest {
 
     private static final String INPUT_JSON = "{\"operation\":%s}";
 
-    private static final String VALID_OPERATION = "\"materialize-next\"";
+    private static final String VALID_OPERATION = "\"materialize-new-pushes\"";
 
     @Test
     void rejectsNullJSON() {
@@ -30,14 +30,14 @@ class JsonSanitizerTest {
         String json = INPUT_JSON.formatted(VALID_OPERATION);
         ApplicationInput input = JsonSanitizer.parseAndValidate(json, ApplicationInput.class);
 
-        assertEquals("materialize-next", input.operation());
+        assertEquals("materialize-new-pushes", input.operation());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
         "{",
         "[]",
-        "{\"operation\":\"materialize-next\",\"operation\":\"other\"}"
+        "{\"operation\":\"materialize-new-pushes\",\"operation\":\"other\"}"
     })
     void rejectsMalformedAndDuplicateJSON(String json) {
         IllegalArgumentException exception = assertThrows(

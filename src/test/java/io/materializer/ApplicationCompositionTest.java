@@ -6,7 +6,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Stage;
 import io.materializer.composition.StrictGuiceModule;
-import io.materializer.environment.models.EnvironmentVariables;
+import io.materializer.environment.EnvironmentVariables;
 import io.materializer.execution.Executor;
 import org.junit.jupiter.api.Test;
 import org.kohsuke.github.GitHub;

@@ -2,8 +2,8 @@ package io.materializer.workflowgeneration;
 
 import java.util.List;
 
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.workflowgeneration.models.BuildMatrixRow;
 import org.junit.jupiter.api.Test;

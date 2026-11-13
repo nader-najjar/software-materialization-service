@@ -6,13 +6,13 @@ import java.util.Optional;
 
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.materializer.shared.LivePipelineDeclarationFetcher;
-import io.materializer.shared.LivePipelineInputsStore;
-import io.materializer.shared.RepositoryPushHistory;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.LivePipelineDeclaration;
-import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.shared.livepipelinedeclarationfetcher.LivePipelineDeclarationFetcher;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.LivePipelineDeclaration;
+import io.materializer.shared.livepipelineinputsstore.LivePipelineInputsStore;
+import io.materializer.shared.livepipelineinputsstore.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
+import io.materializer.shared.repositorypushhistory.RepositoryPushHistory;
 import io.materializer.shared.utilities.HibernateValidatorUtility;
 
 public class LivePipelineInputsReconciler {

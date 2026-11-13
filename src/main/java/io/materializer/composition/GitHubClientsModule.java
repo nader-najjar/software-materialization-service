@@ -6,7 +6,7 @@ import java.net.http.HttpClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.materializer.environment.models.EnvironmentVariables;
+import io.materializer.environment.EnvironmentVariables;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 
