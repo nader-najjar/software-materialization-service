@@ -28,13 +28,13 @@ class ApplicationInputTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "{\"operation\":\"materialize-next\"}",
-        "{\"operation\":\"materialize-next\",\"repositoryName\":null}"
+        "{\"operation\":\"materialize-new-pushes\"}",
+        "{\"operation\":\"materialize-new-pushes\",\"repositoryName\":null}"
     })
     void materializationDoesNotRequireARepository(String json) {
         ApplicationInput input = JsonSanitizer.parseAndValidate(json, ApplicationInput.class);
 
-        assertEquals("materialize-next", input.operation());
+        assertEquals("materialize-new-pushes", input.operation());
         assertNull(input.repositoryName());
     }
 

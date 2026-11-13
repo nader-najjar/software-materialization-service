@@ -6,11 +6,11 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Inject;
-import io.materializer.shared.LivePipelineDeclarationFetcher;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.LivePipelineDeclaration;
-import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.shared.livepipelinedeclarationfetcher.LivePipelineDeclarationFetcher;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.LivePipelineDeclaration;
+import io.materializer.shared.livepipelineinputsstore.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.YamlMapperUtility;
 import io.materializer.workflowgeneration.models.Workflow;

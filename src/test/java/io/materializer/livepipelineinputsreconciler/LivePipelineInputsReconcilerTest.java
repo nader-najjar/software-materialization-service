@@ -2,14 +2,14 @@ package io.materializer.livepipelineinputsreconciler;
 
 import java.util.List;
 
-import io.materializer.shared.LivePipelineDeclarationFetcher;
-import io.materializer.shared.LivePipelineInputsStore;
-import io.materializer.shared.RepositoryPushHistory;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.LivePipelineDeclaration;
-import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.shared.livepipelinedeclarationfetcher.LivePipelineDeclarationFetcher;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.LivePipelineDeclaration;
+import io.materializer.shared.livepipelineinputsstore.LivePipelineInputsStore;
+import io.materializer.shared.livepipelineinputsstore.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
+import io.materializer.shared.repositorypushhistory.RepositoryPushHistory;
 import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.Test;
 

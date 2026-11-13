@@ -3,11 +3,11 @@ package io.materializer.workflowgeneration;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.materializer.shared.LivePipelineDeclarationFetcher;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.LivePipelineDeclaration;
-import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.shared.livepipelinedeclarationfetcher.LivePipelineDeclarationFetcher;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.LivePipelineDeclaration;
+import io.materializer.shared.livepipelineinputsstore.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.ResourceUtility;
 import io.materializer.shared.utilities.YamlMapperUtility;

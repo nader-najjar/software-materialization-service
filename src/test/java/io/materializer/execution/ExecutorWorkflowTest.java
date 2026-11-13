@@ -6,18 +6,18 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.materializer.environment.models.EnvironmentVariables;
+import io.materializer.environment.EnvironmentVariables;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
-import io.materializer.materializerregistrystore.MaterializerRegistryStore;
-import io.materializer.materializerregistrystore.models.MaterializerRegistration;
-import io.materializer.materializerregistrystore.models.MaterializerRegistry;
-import io.materializer.registration.MaterializerRegistrar;
-import io.materializer.shared.LivePipelineDeclarationFetcher;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
-import io.materializer.shared.models.LivePipelineDeclaration;
-import io.materializer.shared.models.LivePipelineInputs;
+import io.materializer.publisherconfiguration.PublisherConfigurator;
+import io.materializer.shared.livepipelinedeclarationfetcher.LivePipelineDeclarationFetcher;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.LivePipelineDeclaration;
+import io.materializer.shared.livepipelineinputsstore.models.LivePipelineInputs;
+import io.materializer.shared.materializerregistrystore.MaterializerRegistryStore;
+import io.materializer.shared.materializerregistrystore.models.MaterializerRegistration;
+import io.materializer.shared.materializerregistrystore.models.MaterializerRegistry;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.ResourceUtility;
 import io.materializer.shared.utilities.YamlMapperUtility;
@@ -58,19 +58,25 @@ class ExecutorWorkflowTest {
             List.of(new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2L))
     );
     private final Executor executor = new Executor(
-            registryStore,
-            livePipelineInputsAdvancer,
-            livePipelineInputsReconciler,
-            new WorkflowGenerator(fetcher, new BuildJobGenerator()),
-            new WorkflowPublisher(gitHub),
-            new EnvironmentVariables("token", "owner/registry", "owner/inputs", null, null),
-            mock(MaterializerRegistrar.class)
+            new RegisterExecutor(
+                    new EnvironmentVariables("token", "owner/registry", "owner/inputs", null, null),
+                    registryStore,
+                    mock(PublisherConfigurator.class)
+            ),
+            new MaterializeNewPushesExecutor(
+                    livePipelineInputsAdvancer,
+                    livePipelineInputsReconciler,
+                    new WorkflowGenerator(fetcher, new BuildJobGenerator()),
+                    new WorkflowPublisher(gitHub),
+                    new EnvironmentVariables("token", "owner/registry", "owner/inputs", null, null),
+                    registryStore
+            )
     );
 
     @Test
     void publishesGeneratedWorkflowAndActionsFromReconciledInputs() throws IOException {
         preparePublication();
-        executor.execute(new String[] {"{\"operation\":\"materialize-next\"}"});
+        executor.execute(new String[] {"{\"operation\":\"materialize-new-pushes\"}"});
 
         InOrder order = inOrder(treeBuilder, repository);
         ArgumentCaptor<String> yaml = ArgumentCaptor.forClass(String.class);
@@ -93,7 +99,7 @@ class ExecutorWorkflowTest {
         IOException failure = new IOException("GitHub unavailable");
         when(repository.createRef("refs/heads/execution", "published-commit")).thenThrow(failure);
 
-        executor.execute(new String[] {"{\"operation\":\"materialize-next\"}"});
+        executor.execute(new String[] {"{\"operation\":\"materialize-new-pushes\"}"});
         verify(treeBuilder).create();
     }
 

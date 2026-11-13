@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.inject.Inject;
-import io.materializer.shared.models.DeclaredPipelineInput;
-import io.materializer.shared.models.DeclaredPipelineStep;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineInput;
+import io.materializer.shared.livepipelinedeclarationfetcher.models.DeclaredPipelineStep;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.workflowgeneration.models.BuildJob;
 import io.materializer.workflowgeneration.models.BuildMatrixRow;

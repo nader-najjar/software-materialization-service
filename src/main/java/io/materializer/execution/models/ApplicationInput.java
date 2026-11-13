@@ -10,7 +10,7 @@ public record ApplicationInput(
         @JsonProperty("operation")
         @NotNull
         @NotBlank
-        @Pattern(regexp = "materialize-next|register")
+        @Pattern(regexp = "materialize-new-pushes|register")
         String operation,
 
         @JsonProperty("repositoryName")
