@@ -3,7 +3,7 @@ run-name: Register ${{ inputs.materializerRepositoryToRegister }}
 
 env:
   ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
-  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-131f780a663a54f7cf36bbeac66891757c9ab340
+  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-5f32e0ed0af272752eb303f49cd98729cf9c760a
   MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
   BUILD_PUBLISHER_APP_CLIENT_ID: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
   BUILD_PUBLISHER_APP_PRIVATE_KEY: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
