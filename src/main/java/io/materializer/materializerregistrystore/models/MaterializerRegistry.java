@@ -1,11 +1,11 @@
-package io.materializer.materializerregistryfetcher.models;
+package io.materializer.materializerregistrystore.models;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.materializer.materializerregistryfetcher.models.annotations.UniqueMaterializerRegistrationsByRepository;
+import io.materializer.materializerregistrystore.models.annotations.UniqueMaterializerRegistrationsByRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 

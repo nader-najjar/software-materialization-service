@@ -1,4 +1,4 @@
-package io.materializer.materializerregistryfetcher.models;
+package io.materializer.materializerregistrystore.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;

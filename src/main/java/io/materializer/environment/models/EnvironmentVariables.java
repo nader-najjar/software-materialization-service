@@ -22,7 +22,17 @@ public record EnvironmentVariables(
         @NotNull
         @NotBlank
         @Pattern(regexp = "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
-        String livePipelineInputsStoreRepository
+        String livePipelineInputsStoreRepository,
+
+        @JsonProperty("BUILD_PUBLISHER_APP_CLIENT_ID")
+        @NotNull
+        @NotBlank
+        String buildPublisherAppClientID,
+
+        @JsonProperty(value = "BUILD_PUBLISHER_APP_PRIVATE_KEY", access = JsonProperty.Access.WRITE_ONLY)
+        @NotNull
+        @NotBlank
+        String buildPublisherAppPrivateKey
 ) {
     @Override
     public String toString() {

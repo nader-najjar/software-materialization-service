@@ -9,9 +9,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
-import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistration;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistry;
+import io.materializer.materializerregistrystore.MaterializerRegistryStore;
+import io.materializer.materializerregistrystore.models.MaterializerRegistration;
+import io.materializer.materializerregistrystore.models.MaterializerRegistry;
+import io.materializer.registration.MaterializerRegistrar;
 import io.materializer.shared.LivePipelineDeclarationFetcher;
 import io.materializer.shared.models.DeclaredPipelineInput;
 import io.materializer.shared.models.DeclaredPipelineStep;
@@ -45,7 +46,7 @@ class ExecutorWorkflowTest {
 
     private final LivePipelineInputsAdvancer livePipelineInputsAdvancer = mock(LivePipelineInputsAdvancer.class);
     private final LivePipelineInputsReconciler livePipelineInputsReconciler = mock(LivePipelineInputsReconciler.class);
-    private final MaterializerRegistryFetcher registryFetcher = mock(MaterializerRegistryFetcher.class);
+    private final MaterializerRegistryStore registryStore = mock(MaterializerRegistryStore.class);
     private final MaterializerRegistration registration = new MaterializerRegistration("owner/materializer");
     private final LivePipelineDeclarationFetcher fetcher = mock(LivePipelineDeclarationFetcher.class);
     private final GitHub gitHub = mock(GitHub.class);
@@ -57,12 +58,13 @@ class ExecutorWorkflowTest {
             List.of(new RepositorySnapshot("owner/source", "main", "b".repeat(40), 2L))
     );
     private final Executor executor = new Executor(
-            registryFetcher,
+            registryStore,
             livePipelineInputsAdvancer,
             livePipelineInputsReconciler,
             new WorkflowGenerator(fetcher, new BuildJobGenerator()),
             new WorkflowPublisher(gitHub),
-            new EnvironmentVariables("token", "owner/registry", "owner/inputs")
+            new EnvironmentVariables("token", "owner/registry", "owner/inputs", null, null),
+            mock(MaterializerRegistrar.class)
     );
 
     @Test
@@ -96,7 +98,7 @@ class ExecutorWorkflowTest {
     }
 
     private void preparePublication() throws IOException {
-        when(registryFetcher.fetch()).thenReturn(new MaterializerRegistry(List.of(registration)));
+        when(registryStore.read()).thenReturn(new MaterializerRegistry(List.of(registration)));
         LivePipelineInputs advancedInputs = new LivePipelineInputs(
                 reconciledInputs.materializerRepositorySnapshot(),
                 List.of()

@@ -44,7 +44,7 @@
         {
           runtime = pkgs.writeShellApplication {
             name = "execute";
-            runtimeInputs = [ pkgs.jdk25_headless ];
+            runtimeInputs = [ pkgs.jdk25_headless pkgs.gh ];
             runtimeEnv.JAVA_HOME = "${pkgs.jdk25_headless}";
             text = ''
               idiomatic_artifacts_dir="$1"

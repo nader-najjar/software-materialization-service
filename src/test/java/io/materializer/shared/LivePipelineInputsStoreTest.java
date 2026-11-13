@@ -37,7 +37,7 @@ class LivePipelineInputsStoreTest {
     private final GHTree tree = mock(GHTree.class);
     private final LivePipelineInputsStore store = new LivePipelineInputsStore(
             gitHub,
-            new EnvironmentVariables("test", "owner/registry", "owner/service")
+            new EnvironmentVariables("test", "owner/registry", "owner/service", null, null)
     );
 
     @Test

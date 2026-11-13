@@ -40,7 +40,7 @@ class RepositoryPushHistoryTest {
     private final RepositoryPushHistory repositoryPushHistory = new RepositoryPushHistory(
             gitHub,
             httpClient,
-            new EnvironmentVariables("test", REPO, REPO)
+            new EnvironmentVariables("test", REPO, REPO, null, null)
     );
 
     @Test
