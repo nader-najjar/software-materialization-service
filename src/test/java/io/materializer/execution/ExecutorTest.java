@@ -8,9 +8,10 @@ import java.util.Optional;
 import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
-import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistration;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistry;
+import io.materializer.materializerregistrystore.MaterializerRegistryStore;
+import io.materializer.materializerregistrystore.models.MaterializerRegistration;
+import io.materializer.materializerregistrystore.models.MaterializerRegistry;
+import io.materializer.registration.MaterializerRegistrar;
 import io.materializer.shared.models.LivePipelineInputs;
 import io.materializer.shared.models.RepositorySnapshot;
 import io.materializer.shared.utilities.JsonMapperUtility;
@@ -31,14 +32,20 @@ import static org.mockito.Mockito.when;
 
 class ExecutorTest {
 
-    private final MaterializerRegistryFetcher registryFetcher = mock(MaterializerRegistryFetcher.class);
+    private final MaterializerRegistryStore registryStore = mock(MaterializerRegistryStore.class);
     private final LivePipelineInputsAdvancer advancer = mock(LivePipelineInputsAdvancer.class);
     private final LivePipelineInputsReconciler reconciler = mock(LivePipelineInputsReconciler.class);
     private final WorkflowGenerator generator = mock(WorkflowGenerator.class);
     private final WorkflowPublisher publisher = mock(WorkflowPublisher.class);
+    private final MaterializerRegistrar registrar = mock(MaterializerRegistrar.class);
     private final Executor executor = new Executor(
-            registryFetcher, advancer, reconciler, generator, publisher,
-            new EnvironmentVariables("token", "owner/registry", "owner/inputs")
+            registryStore,
+            advancer,
+            reconciler,
+            generator,
+            publisher,
+            new EnvironmentVariables("token", "owner/registry", "owner/inputs", null, null),
+            registrar
     );
     private final MaterializerRegistration registration = new MaterializerRegistration("owner/materializer");
 
@@ -51,28 +58,38 @@ class ExecutorTest {
         ));
         environment.remove(missing);
         Executor incomplete = new Executor(
-                registryFetcher, advancer, reconciler, generator, publisher,
-                JsonMapperUtility.MAPPER.convertValue(environment, EnvironmentVariables.class)
+                registryStore,
+                advancer,
+                reconciler,
+                generator,
+                publisher,
+                JsonMapperUtility.MAPPER.convertValue(environment, EnvironmentVariables.class),
+                registrar
         );
         assertThrows(ValidationException.class,
                 () -> incomplete.execute(new String[] {"{\"operation\":\"materialize-next\"}"}));
-        verifyNoInteractions(registryFetcher, advancer, reconciler, generator, publisher);
+        verifyNoInteractions(registryStore, advancer, reconciler, generator, publisher);
     }
 
     @Test
     void rejectsInvalidStorageRepositoryBeforeProcessing() {
         Executor invalid = new Executor(
-                registryFetcher, advancer, reconciler, generator, publisher,
-                new EnvironmentVariables("token", "owner/registry", "invalid")
+                registryStore,
+                advancer,
+                reconciler,
+                generator,
+                publisher,
+                new EnvironmentVariables("token", "owner/registry", "invalid", null, null),
+                registrar
         );
         assertThrows(ValidationException.class,
                 () -> invalid.execute(new String[] {"{\"operation\":\"materialize-next\"}"}));
-        verifyNoInteractions(registryFetcher, advancer, reconciler, generator, publisher);
+        verifyNoInteractions(registryStore, advancer, reconciler, generator, publisher);
     }
 
     @Test
     void doesNothingForAnEmptyRegistry() {
-        when(registryFetcher.fetch()).thenReturn(new MaterializerRegistry(List.of()));
+        when(registryStore.read()).thenReturn(new MaterializerRegistry(List.of()));
 
         execute();
 
@@ -81,7 +98,7 @@ class ExecutorTest {
 
     @Test
     void doesNothingWhenRegisteredPipelineHasNoUpdate() {
-        when(registryFetcher.fetch()).thenReturn(new MaterializerRegistry(List.of(registration)));
+        when(registryStore.read()).thenReturn(new MaterializerRegistry(List.of(registration)));
         when(advancer.advance(registration.repositoryName())).thenReturn(Optional.empty());
 
         execute();
@@ -91,7 +108,7 @@ class ExecutorTest {
 
     @Test
     void propagatesRegistryFailures() {
-        when(registryFetcher.fetch()).thenThrow(new IllegalArgumentException("Invalid registry"));
+        when(registryStore.read()).thenThrow(new IllegalArgumentException("Invalid registry"));
 
         assertThrows(IllegalArgumentException.class, this::execute);
 
@@ -100,7 +117,7 @@ class ExecutorTest {
 
     @Test
     void generatesAndPublishesFromReconciledInputs() {
-        when(registryFetcher.fetch()).thenReturn(new MaterializerRegistry(List.of(registration)));
+        when(registryStore.read()).thenReturn(new MaterializerRegistry(List.of(registration)));
         LivePipelineInputs advanced = inputs(registration.repositoryName());
         LivePipelineInputs reconciled = prepareSuccessfulRegistration(registration);
 
@@ -117,7 +134,7 @@ class ExecutorTest {
     @ValueSource(strings = {"advance", "reconcile", "generate", "publish"})
     void continuesToNextRegistrationAfterFailure(String stage) {
         MaterializerRegistration broken = new MaterializerRegistration("owner/broken");
-        when(registryFetcher.fetch()).thenReturn(new MaterializerRegistry(List.of(broken, registration)));
+        when(registryStore.read()).thenReturn(new MaterializerRegistry(List.of(broken, registration)));
         prepareFailure(broken, stage);
         LivePipelineInputs reconciled = prepareSuccessfulRegistration(registration);
 
@@ -132,7 +149,7 @@ class ExecutorTest {
     void rejectsMissingArguments() {
         assertThrows(IllegalArgumentException.class, () -> executor.execute(null));
         assertThrows(IllegalArgumentException.class, () -> executor.execute(new String[0]));
-        verifyNoInteractions(registryFetcher, advancer);
+        verifyNoInteractions(registryStore, advancer);
     }
 
     @Test
@@ -141,7 +158,7 @@ class ExecutorTest {
                 IllegalArgumentException.class,
                 () -> executor.execute(new String[] {"{\"operation\":\"unknown\"}"})
         );
-        verifyNoInteractions(registryFetcher, advancer);
+        verifyNoInteractions(registryStore, advancer);
     }
 
     private void execute() {

@@ -8,9 +8,10 @@ import io.materializer.environment.models.EnvironmentVariables;
 import io.materializer.execution.models.ApplicationInput;
 import io.materializer.livepipelineinputsadvancer.LivePipelineInputsAdvancer;
 import io.materializer.livepipelineinputsreconciler.LivePipelineInputsReconciler;
-import io.materializer.materializerregistryfetcher.MaterializerRegistryFetcher;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistration;
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistry;
+import io.materializer.materializerregistrystore.MaterializerRegistryStore;
+import io.materializer.materializerregistrystore.models.MaterializerRegistration;
+import io.materializer.materializerregistrystore.models.MaterializerRegistry;
+import io.materializer.registration.MaterializerRegistrar;
 import io.materializer.shared.models.LivePipelineInputs;
 import io.materializer.shared.utilities.HibernateValidatorUtility;
 import io.materializer.shared.utilities.JsonSanitizer;
@@ -23,29 +24,32 @@ public class Executor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Executor.class);
 
-    private final MaterializerRegistryFetcher materializerRegistryFetcher;
+    private final MaterializerRegistryStore materializerRegistryStore;
     private final LivePipelineInputsAdvancer livePipelineInputsAdvancer;
     private final LivePipelineInputsReconciler livePipelineInputsReconciler;
     private final WorkflowGenerator workflowGenerator;
     private final WorkflowPublisher workflowPublisher;
     private final EnvironmentVariables environmentVariables;
+    private final MaterializerRegistrar materializerRegistrar;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Guice manages the shared workflow publisher")
     @Inject
     public Executor(
-            MaterializerRegistryFetcher materializerRegistryFetcher,
+            MaterializerRegistryStore materializerRegistryStore,
             LivePipelineInputsAdvancer livePipelineInputsAdvancer,
             LivePipelineInputsReconciler livePipelineInputsReconciler,
             WorkflowGenerator workflowGenerator,
             WorkflowPublisher workflowPublisher,
-            EnvironmentVariables environmentVariables
+            EnvironmentVariables environmentVariables,
+            MaterializerRegistrar materializerRegistrar
     ) {
-        this.materializerRegistryFetcher = materializerRegistryFetcher;
+        this.materializerRegistryStore = materializerRegistryStore;
         this.livePipelineInputsAdvancer = livePipelineInputsAdvancer;
         this.livePipelineInputsReconciler = livePipelineInputsReconciler;
         this.workflowGenerator = workflowGenerator;
         this.workflowPublisher = workflowPublisher;
         this.environmentVariables = environmentVariables;
+        this.materializerRegistrar = materializerRegistrar;
     }
 
     public void execute(String[] args) {
@@ -55,17 +59,31 @@ public class Executor {
 
         ApplicationInput input = JsonSanitizer.parseAndValidate(args[0], ApplicationInput.class);
         switch (input.operation()) {
+            case "register" -> register(input.repositoryName());
             case "materialize-next" -> materializeNext();
             default -> throw new IllegalArgumentException("Unsupported operation: " + input.operation());
         }
     }
 
+    private void register(String repositoryName) {
+        HibernateValidatorUtility.validateProperties(
+                environmentVariables,
+                "materializerRegistryRepository",
+                "buildPublisherAppClientID",
+                "buildPublisherAppPrivateKey"
+        );
+
+        materializerRegistrar.register(repositoryName);
+    }
+
     private void materializeNext() {
         HibernateValidatorUtility.validateProperties(
                 environmentVariables,
-                "materializerRegistryRepository", "livePipelineInputsStoreRepository"
+                "materializerRegistryRepository",
+                "livePipelineInputsStoreRepository"
         );
-        MaterializerRegistry materializerRegistry = materializerRegistryFetcher.fetch();
+
+        MaterializerRegistry materializerRegistry = materializerRegistryStore.read();
         for (MaterializerRegistration registration : materializerRegistry.registrations()) {
             materializeNextRegistrationUpdate(registration);
         }
@@ -87,5 +105,4 @@ public class Executor {
             LOGGER.error("Could not materialize {}", registration.repositoryName(), exception);
         }
     }
-
 }

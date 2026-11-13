@@ -1,10 +1,10 @@
-package io.materializer.materializerregistryfetcher.models.annotations;
+package io.materializer.materializerregistrystore.models.annotations;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import io.materializer.materializerregistryfetcher.models.MaterializerRegistration;
+import io.materializer.materializerregistrystore.models.MaterializerRegistration;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

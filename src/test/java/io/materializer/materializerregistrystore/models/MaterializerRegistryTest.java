@@ -1,4 +1,4 @@
-package io.materializer.materializerregistryfetcher.models;
+package io.materializer.materializerregistrystore.models;
 
 import java.util.ArrayList;
 import java.util.List;
