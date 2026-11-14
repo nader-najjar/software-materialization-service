@@ -1,3 +1,5 @@
 {
-  "registrations": []
+  "registrations" : [ {
+    "repositoryName" : "nader-najjar/software-materialization-service-materializer"
+  } ]
 }
