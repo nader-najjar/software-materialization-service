@@ -3,10 +3,14 @@ run-name: Register ${{ inputs.materializerRepositoryToRegister }}
 
 env:
   ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
-  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-5f32e0ed0af272752eb303f49cd98729cf9c760a
+  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-03bb345f3fa78bf4ba3972064f1372f737db2478
   MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
-  BUILD_PUBLISHER_APP_CLIENT_ID: ${{ vars.BUILD_PUBLISHER_APP_CLIENT_ID }}
-  BUILD_PUBLISHER_APP_PRIVATE_KEY: ${{ secrets.BUILD_PUBLISHER_APP_PRIVATE_KEY }}
+  LIVE_PIPELINE_INPUTS_STORE_REPOSITORY: nader-najjar/software-materialization-service
+  MATERIALIZATION_SERVICE_REPOSITORY: nader-najjar/software-materialization-service
+  MATERIALIZATION_DISPATCH_CLIENT_ID: ${{ vars.MATERIALIZATION_DISPATCH_CLIENT_ID }}
+  MATERIALIZATION_DISPATCH_PRIVATE_KEY: ${{ secrets.MATERIALIZATION_DISPATCH_PRIVATE_KEY }}
+  MATERIALIZATION_PUBLISH_CLIENT_ID: ${{ vars.MATERIALIZATION_PUBLISH_CLIENT_ID }}
+  MATERIALIZATION_PUBLISH_PRIVATE_KEY: ${{ secrets.MATERIALIZATION_PUBLISH_PRIVATE_KEY }}
 
 on:
   workflow_dispatch:
@@ -29,6 +33,16 @@ jobs:
     name: Register Materializer
     runs-on: ubuntu-24.04-arm
     steps:
+      - name: Authorize Caller
+        env:
+          CALLER_ID: ${{ github.actor_id }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if [[ "$CALLER_ID" != "243668932" || "$TRIGGERING_ACTOR" != "nader-najjar" ]]; then
+            echo "::error::Only nader-najjar may run this workflow."
+            exit 1
+          fi
+
       - name: Download Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -47,15 +61,16 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          client-id: ${{ vars.MATERIALIZATION_APP_CLIENT_ID }}
-          private-key: ${{ secrets.MATERIALIZATION_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.MATERIALIZATION_MASTER_CLIENT_ID }}
+          private-key: ${{ secrets.MATERIALIZATION_MASTER_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: |
             ${{ env.MATERIALIZER_REGISTRY_REPOSITORY }}
+            ${{ env.LIVE_PIPELINE_INPUTS_STORE_REPOSITORY }}
             ${{ inputs.materializerRepositoryToRegister }}
 
       - name: Register Materializer
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          APPLICATION_INPUT: '{"operation":"register","repositoryName":${{ toJSON(inputs.materializerRepositoryToRegister) }}}'
-        run: ./custom-software/execution-script-symlink ./custom-software/idiomatic-artifacts "$APPLICATION_INPUT"
+          APPLICATION_INPUT: '{"repositoryName":${{ toJSON(inputs.materializerRepositoryToRegister) }}}'
+        run: ./custom-software/execution-script-symlink ./custom-software/idiomatic-artifacts register "$APPLICATION_INPUT"
