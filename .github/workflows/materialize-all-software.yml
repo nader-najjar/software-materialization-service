@@ -1,0 +1,69 @@
+name: Materialize All Software
+run-name: Materialize All Software
+
+env:
+  ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
+  ALGORITHM_RELEASE: nader-najjar@software-materialization-service-algorithm-aarch64-linux-be4f35e65b8b6d67f607a461ad8e70369582d2e6
+  MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
+  LIVE_PIPELINE_INPUTS_STORE_REPOSITORY: nader-najjar/software-materialization-service
+  MATERIALIZATION_SERVICE_REPOSITORY: nader-najjar/software-materialization-service
+  MATERIALIZATION_DISPATCH_CLIENT_ID: ${{ vars.MATERIALIZATION_DISPATCH_CLIENT_ID }}
+  MATERIALIZATION_DISPATCH_PRIVATE_KEY: ${{ secrets.MATERIALIZATION_DISPATCH_PRIVATE_KEY }}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "2-59/10 * * * *"
+
+concurrency:
+  group: materialize-all-software
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  materialize-all-software:
+    name: Materialize All Software
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Authorize Caller
+        env:
+          CALLER_ID: ${{ github.actor_id }}
+          DISPATCH_BOT_ID: ${{ vars.MATERIALIZATION_DISPATCH_BOT_ID }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] || exit 1
+          if [[ "$CALLER_ID" == "243668932" && "$TRIGGERING_ACTOR" == "nader-najjar" ]]; then exit 0; fi
+          if [[ -n "$DISPATCH_BOT_ID" && "$CALLER_ID" == "$DISPATCH_BOT_ID" && "$TRIGGERING_ACTOR" == "$ACTOR" ]]; then exit 0; fi
+          echo "::error::Caller is not authorized to materialize all software."
+          exit 1
+
+      - name: Download Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$ALGORITHM_RELEASE" \
+            --repo "$ALGORITHM_REPOSITORY" \
+            --pattern "$ALGORITHM_RELEASE.tar.gz" \
+            --dir "$RUNNER_TEMP"
+          mkdir -p ./custom-software
+          tar -xzf "$RUNNER_TEMP/$ALGORITHM_RELEASE.tar.gz" -C ./custom-software
+
+      - name: Link Runtime
+        run: sudo ln -sT "$GITHUB_WORKSPACE/custom-software/runtime-artifacts/nix" /nix
+
+      - name: Create Materialization Service Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.MATERIALIZATION_MASTER_CLIENT_ID }}
+          private-key: ${{ secrets.MATERIALIZATION_MASTER_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Materialize All Software
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: ./custom-software/execution-script-symlink ./custom-software/idiomatic-artifacts materialize-all-software
