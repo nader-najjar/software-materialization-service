@@ -2,5 +2,8 @@
   "registrations" : [ {
     "repositoryName" : "nader-najjar/software-materialization-service-materializer",
     "sourceRepositories" : [ "nader-najjar/software-materialization-service-algorithm" ]
+  }, {
+    "repositoryName" : "nader-najjar/pure-materializer",
+    "sourceRepositories" : [ "nader-najjar/pure-java" ]
   } ]
 }
