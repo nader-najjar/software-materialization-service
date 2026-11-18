@@ -3,7 +3,7 @@ run-name: Register ${{ inputs.sourceRepository }} for ${{ inputs.materializerRep
 
 env:
   ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
-  ALGORITHM_RELEASE: "nader-najjar--software-materialization-service-algorithm--aarch64-linux--1d4f49573c259c4f07fcd1ead4f3ebc44de70d4d"
+  ALGORITHM_RELEASE: "nader-najjar--software-materialization-service-algorithm--aarch64-linux--f962aa38febb60064501f368a9f30fa212335abf"
   MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
 
 on:
