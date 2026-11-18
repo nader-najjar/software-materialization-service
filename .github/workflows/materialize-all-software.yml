@@ -3,7 +3,7 @@ run-name: Materialize All Software
 
 env:
   ALGORITHM_REPOSITORY: nader-najjar/software-materialization-service-algorithm
-  ALGORITHM_RELEASE: "nader-najjar@software-materialization-service-algorithm-aarch64-linux-267312cec3fd80feed65e88cacb5dc7b1f8fa088"
+  ALGORITHM_RELEASE: "nader-najjar--software-materialization-service-algorithm--aarch64-linux--267312cec3fd80feed65e88cacb5dc7b1f8fa088"
   MATERIALIZER_REGISTRY_REPOSITORY: nader-najjar/software-materialization-service
   LIVE_PIPELINE_INPUTS_STORE_REPOSITORY: nader-najjar/software-materialization-service
   MATERIALIZATION_SERVICE_REPOSITORY: nader-najjar/software-materialization-service
